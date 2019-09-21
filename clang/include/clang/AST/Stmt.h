@@ -959,6 +959,15 @@ protected:
     SourceLocation Loc;
   };
 
+  // ===--- Pattern Matching bitfields classes ---===//
+  class InspectStmtBitfields {
+    friend class InspectStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "inspect".
+    SourceLocation InspectLoc;
+  };
   union {
     // Same order as in StmtNodes.td.
     // Statements
@@ -1027,6 +1036,8 @@ protected:
     // C++ Coroutines TS expressions
     CoawaitExprBitfields CoawaitBits;
 
+    // C++ Pattern Matching expressions
+    InspectStmtBitfields InspectStmtBits;
     // Obj-C Expressions
     ObjCIndirectCopyRestoreExprBitfields ObjCIndirectCopyRestoreExprBits;
 
