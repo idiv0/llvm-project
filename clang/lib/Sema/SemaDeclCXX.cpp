@@ -2067,6 +2067,12 @@ CheckConstexprFunctionStmt(Sema &SemaRef, const FunctionDecl *Dcl, Stmt *S,
         return false;
     return true;
 
+  case Stmt::InspectStmtClass:
+  case Stmt::WildcardPatternStmtClass:
+  case Stmt::IdentifierPatternStmtClass:
+  case Stmt::ExpressionPatternStmtClass:
+    break;
+
   case Stmt::GCCAsmStmtClass:
   case Stmt::MSAsmStmtClass:
     // C++2a allows inline assembly statements.
