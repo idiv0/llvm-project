@@ -2574,7 +2574,23 @@ enum CXCursorKind {
    */
   CXCursor_OMPParallelMasterDirective      = 285,
 
-  CXCursor_LastStmt = CXCursor_OMPParallelMasterDirective,
+  /** An inspect statement.
+   */
+  CXCursor_InspectStmt = 286,
+
+  /** A wildcard pattern statement.
+   */
+  CXCursor_WildcardPatternStmt = 287,
+
+  /** An identifier pattern statement.
+   */
+  CXCursor_IdentifierPatternStmt = 288,
+
+  /** An expression pattern statement.
+   */
+  CXCursor_ExpressionPatternStmt = 289,
+
+  CXCursor_LastStmt = CXCursor_ExpressionPatternStmt,
 
   /**
    * Cursor that represents the translation unit itself.
