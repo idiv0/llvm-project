@@ -80,6 +80,8 @@ def warn_cxx11_keyword : Warning<"'%0' is a keyword in C++11">,
   InGroup<CXX11Compat>, DefaultIgnore;
 def warn_cxx2a_keyword : Warning<"'%0' is a keyword in C++20">,
   InGroup<CXX20Compat>, DefaultIgnore;
+def warn_cxx_pattern_matching : Warning<"'%0' is a keyword in C++ pattern matching">,
+  InGroup<CXX20Compat>, DefaultIgnore;
 
 def ext_unterminated_char_or_string : ExtWarn<
   "missing terminating %select{'|'\"'}0 character">, InGroup<InvalidPPToken>;
