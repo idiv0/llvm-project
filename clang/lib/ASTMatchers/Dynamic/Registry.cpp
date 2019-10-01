@@ -217,6 +217,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(equalsIntegralValue);
   REGISTER_MATCHER(explicitCastExpr);
   REGISTER_MATCHER(expr);
+  REGISTER_MATCHER(expressionPatternStmt);
   REGISTER_MATCHER(exprWithCleanups);
   REGISTER_MATCHER(fieldDecl);
   REGISTER_MATCHER(floatLiteral);
@@ -330,6 +331,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasUnderlyingType);
   REGISTER_MATCHER(hasUnqualifiedDesugaredType);
   REGISTER_MATCHER(hasValueType);
+  REGISTER_MATCHER(identifierPatternStmt);
   REGISTER_MATCHER(ifStmt);
   REGISTER_MATCHER(ignoringElidableConstructorCall);
   REGISTER_MATCHER(ignoringImpCasts);
@@ -344,6 +346,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(initListExpr);
   REGISTER_MATCHER(injectedClassNameType);
   REGISTER_MATCHER(innerType);
+  REGISTER_MATCHER(inspectStmt);
   REGISTER_MATCHER(integerLiteral);
   REGISTER_MATCHER(isAllowedToContainClauseKind);
   REGISTER_MATCHER(isAnonymous);
@@ -532,6 +535,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(variableArrayType);
   REGISTER_MATCHER(voidType);
   REGISTER_MATCHER(whileStmt);
+  REGISTER_MATCHER(wildcardPatternStmt);
   REGISTER_MATCHER(withInitializer);
 }
 
