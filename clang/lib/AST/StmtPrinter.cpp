@@ -315,7 +315,7 @@ void StmtPrinter::VisitIdentifierPatternStmt(IdentifierPatternStmt *Node) {
 
 void StmtPrinter::VisitExpressionPatternStmt(ExpressionPatternStmt *Node) {
   Indent();
-  PrintExpr(Node->getLHS());
+  PrintExpr(Node->getCond());
   OS << " :" << NL;
   PrintStmt(Node->getSubStmt(), 0);
 }
