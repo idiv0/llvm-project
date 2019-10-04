@@ -515,13 +515,15 @@ Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
 
 StmtResult Sema::ActOnWildcardPattern(SourceLocation WildcardLoc,
                                       SourceLocation ColonLoc,
-                                      Stmt *SubStmt) {
+                                      Stmt *SubStmt,
+                                      Expr *PatternGuard) {
 
   if (getCurFunction()->InspectStack.empty()) {
     return StmtError();
   }
 
-  auto* WPS = WildcardPatternStmt::Create(Context, WildcardLoc, ColonLoc);
+  auto* WPS = WildcardPatternStmt::Create(Context, WildcardLoc, 
+                                          ColonLoc, PatternGuard);
   WPS->setSubStmt(SubStmt);
 
   getCurFunction()->InspectStack.back().getPointer()->addPattern(WPS);
@@ -531,13 +533,14 @@ StmtResult Sema::ActOnWildcardPattern(SourceLocation WildcardLoc,
 StmtResult Sema::ActOnIdentifierPattern(SourceLocation ConditionLoc,
                                         SourceLocation ColonLoc,
                                         Expr *Condition,
-                                        Stmt *SubStmt) {
+                                        Stmt *SubStmt,
+                                        Expr *PatternGuard) {
   if (getCurFunction()->InspectStack.empty()) {
     return StmtError();
   }
 
-  auto* IPS = IdentifierPatternStmt::Create(Context,
-                                            ConditionLoc, ColonLoc);
+  auto* IPS = IdentifierPatternStmt::Create(Context, ConditionLoc, 
+                                            ColonLoc, PatternGuard);
   IPS->setCond(Condition);
   IPS->setSubStmt(SubStmt);
 
@@ -548,13 +551,14 @@ StmtResult Sema::ActOnIdentifierPattern(SourceLocation ConditionLoc,
 StmtResult Sema::ActOnExpressionPattern(SourceLocation ConditionLoc,
                                         SourceLocation ColonLoc,
                                         Expr *Condition,
-                                        Stmt *SubStmt) {
+                                        Stmt *SubStmt,
+                                        Expr *PatternGuard) {
   if (getCurFunction()->InspectStack.empty()) {
     return StmtError();
   }
 
-  auto* EPS = ExpressionPatternStmt::Create(Context,
-                                            ConditionLoc, ColonLoc);
+  auto* EPS = ExpressionPatternStmt::Create(Context, ConditionLoc, 
+                                            ColonLoc, PatternGuard);
   EPS->setCond(Condition);
   EPS->setSubStmt(SubStmt);
   getCurFunction()->InspectStack.back().getPointer()->addPattern(EPS);
