@@ -2729,7 +2729,6 @@ void EnqueueVisitor::VisitSwitchStmt(const SwitchStmt *S) {
 }
 
 void EnqueueVisitor::VisitInspectStmt(const InspectStmt *S) {
-  AddStmt(S->getBody());
   AddStmt(S->getCond());
   AddDecl(S->getConditionVariable());
 }

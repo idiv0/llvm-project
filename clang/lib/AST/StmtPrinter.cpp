@@ -298,7 +298,6 @@ void StmtPrinter::VisitInspectStmt(InspectStmt *Node) {
   else
     PrintExpr(Node->getCond());
   OS << ")";
-  PrintControlledStmt(Node->getBody());
 }
 
 void StmtPrinter::VisitWildcardPatternStmt(WildcardPatternStmt *Node) {
