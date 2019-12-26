@@ -525,8 +525,6 @@ StmtResult Sema::ActOnWildcardPattern(SourceLocation WildcardLoc,
   auto* WPS = WildcardPatternStmt::Create(Context, WildcardLoc, 
                                           ColonLoc, PatternGuard);
   WPS->setSubStmt(SubStmt);
-
-  getCurFunction()->InspectStack.back().getPointer()->addPattern(WPS);
   return WPS;
 }
 
@@ -543,8 +541,6 @@ StmtResult Sema::ActOnIdentifierPattern(SourceLocation ConditionLoc,
                                             ColonLoc, PatternGuard);
   IPS->setCond(Condition);
   IPS->setSubStmt(SubStmt);
-
-  getCurFunction()->InspectStack.back().getPointer()->addPattern(IPS);
   return IPS;
 }
 
@@ -561,7 +557,6 @@ StmtResult Sema::ActOnExpressionPattern(SourceLocation ConditionLoc,
                                             ColonLoc, PatternGuard);
   EPS->setCond(Condition);
   EPS->setSubStmt(SubStmt);
-  getCurFunction()->InspectStack.back().getPointer()->addPattern(EPS);
   return EPS;
 }
 
