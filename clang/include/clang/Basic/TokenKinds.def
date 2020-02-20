@@ -38,6 +38,9 @@
 #ifndef MODULES_KEYWORD
 #define MODULES_KEYWORD(X) KEYWORD(X,KEYMODULES)
 #endif
+#ifndef PATTERN_MATCHING_KEYWORD
+#define PATTERN_MATCHING_KEYWORD(X) KEYWORD(X,KEYPATTERN_MATCHING)
+#endif
 #ifndef TYPE_TRAIT
 #define TYPE_TRAIT(N,I,K) KEYWORD(I,K)
 #endif
@@ -249,6 +252,8 @@ PUNCTUATOR(caretcaret,            "^^")
 //                 are enabled.
 //   KEYMODULES - This is a keyword if the C++ extensions for modules
 //                are enabled.
+//   KEYPATTERN_MATCHING - This is a keyword if the C++ extensions for
+//                        pattern matching are enabled.
 //   KEYGNU   - This is a keyword if GNU extensions are enabled
 //   KEYMS    - This is a keyword if Microsoft extensions are enabled
 //   KEYMSCOMPAT - This is a keyword if Microsoft compatibility mode is enabled
@@ -385,6 +390,9 @@ COROUTINES_KEYWORD(co_yield)
 // C++ modules TS keywords
 MODULES_KEYWORD(module)
 MODULES_KEYWORD(import)
+
+// C++ pattern matching keywords
+PATTERN_MATCHING_KEYWORD(inspect)
 
 // C++20 keywords.
 CXX2A_KEYWORD(char8_t               , CHAR8SUPPORT)
@@ -862,6 +870,7 @@ ANNOTATION(header_unit)
 #undef TYPE_TRAIT_2
 #undef TYPE_TRAIT_1
 #undef TYPE_TRAIT
+#undef PATTERN_MATCHING_KEYWORD
 #undef CONCEPTS_KEYWORD
 #undef CXX2A_KEYWORD
 #undef CXX11_KEYWORD

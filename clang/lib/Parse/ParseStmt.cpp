@@ -255,6 +255,8 @@ Retry:
     return ParseIfStatement(TrailingElseLoc);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
     return ParseSwitchStatement(TrailingElseLoc);
+  case tok::kw_inspect:              // C++2a p1371 6: inspect-statement
+    return ParseInspectStatement(TrailingElseLoc);
 
   case tok::kw_while:               // C99 6.8.5.1: while-statement
     return ParseWhileStatement(TrailingElseLoc);
@@ -1444,6 +1446,89 @@ StmtResult Parser::ParseIfStatement(SourceLocation *TrailingElseLoc) {
 
   return Actions.ActOnIfStmt(IfLoc, IsConstexpr, InitStmt.get(), Cond,
                              ThenStmt.get(), ElseLoc, ElseStmt.get());
+}
+
+/// ParseInspectStatement
+/// [C++] inspect-statement:
+///         'inspect' 'constexpr[opt]' '(' expression ')' trailing-return-type[opt]
+///                   { inspect-case-seq }
+///         'inspect' 'constexpr[opt]' '(' condition ')' trailing-return-type[opt]
+///                   { inspect-case-seq }
+StmtResult Parser::ParseInspectStatement(SourceLocation *TrailingElseLoc) {
+  assert(Tok.is(tok::kw_inspect) && "Not a inspect stmt!");
+  // FIXME: do we need a error message if the wrong version of C++ is used?
+  SourceLocation InspectLoc = ConsumeToken();  // eat the 'inspect'.
+
+  bool IsConstexpr = false;
+  if (Tok.is(tok::kw_constexpr)) {
+    IsConstexpr = true;
+    ConsumeToken();
+  }
+
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(Tok, diag::err_expected_lparen_after) << "inspect";
+    SkipUntil(tok::semi);
+    return StmtError();
+  }
+
+  // C++ 6.4p3:
+  // A name introduced by a declaration in a condition is in scope from its
+  // point of declaration until the end of the substatements controlled by the
+  // condition.
+  // C++ 3.3.2p4:
+  // Names declared in the for-init-statement, and in the condition of if,
+  // while, for, and switch statements are local to the if, while, for, or
+  // switch statement (including the controlled statement).
+  //
+  unsigned ScopeFlags = Scope::InspectScope | Scope::DeclScope | Scope::ControlScope; 
+  // FIXME: implement support for inspect in `ParseScope`
+  ParseScope InspectScope(this, ScopeFlags);
+
+  // Parse the condition.
+  StmtResult InitStmt;
+  Sema::ConditionResult Cond;
+  // FIXME: this will need arbitrary (differently from integral on 'switch')
+  // support on the condition.
+  if (ParseParenExprOrCondition(&InitStmt, Cond, InspectLoc,
+                                Sema::ConditionKind::Inspect))
+    return StmtError();
+
+  // FIXME: handle trailing-return-type[opt]
+  StmtResult Inspect =
+      Actions.ActOnStartOfInspectStmt(InspectLoc, InitStmt.get(), Cond);
+
+  if (Inspect.isInvalid()) {
+    // Skip the switch body.
+    // FIXME: This is not optimal recovery, but parsing the body is more
+    // dangerous due to the presence of case and default statements, which
+    // will have no place to connect back with the switch.
+    if (Tok.is(tok::l_brace)) {
+      ConsumeBrace();
+      SkipUntil(tok::r_brace);
+    } else
+      SkipUntil(tok::semi);
+    return Inspect;
+  }
+
+  // C++ 6.4p1:
+  // The substatement in a selection-statement (each substatement, in the else
+  // form of the if statement) implicitly defines a local scope.
+  //
+  // See comments in ParseIfStatement for why we create a scope for the
+  // condition and a new scope for substatement in C++.
+  //
+  getCurScope()->AddFlags(Scope::BreakScope);
+  ParseScope InnerScope(this, Scope::DeclScope, true /*EnteredScope*/,
+                        Tok.is(tok::l_brace));
+
+  // Read the body statement.
+  StmtResult Body(ParseStatement(TrailingElseLoc));
+
+  // Pop the scopes.
+  InnerScope.Exit();
+  InspectScope.Exit();
+
+  return Actions.ActOnFinishInspectStmt(InspectLoc, Inspect.get(), Body.get());
 }
 
 /// ParseSwitchStatement

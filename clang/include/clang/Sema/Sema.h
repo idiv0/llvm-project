@@ -4209,6 +4209,11 @@ public:
                                     ConditionResult Cond);
   StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                            Stmt *Switch, Stmt *Body);
+  StmtResult ActOnStartOfInspectStmt(SourceLocation InspectLoc,
+                                    Stmt *InitStmt,
+                                    ConditionResult Cond);
+  StmtResult ActOnFinishInspectStmt(SourceLocation InspectLoc,
+                                    Stmt *Inspect, Stmt *Body);
   StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ConditionResult Cond,
                             Stmt *Body);
   StmtResult ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
@@ -11089,7 +11094,8 @@ public:
   enum class ConditionKind {
     Boolean,     ///< A boolean condition, from 'if', 'while', 'for', or 'do'.
     ConstexprIf, ///< A constant boolean condition from 'if constexpr'.
-    Switch       ///< An integral condition for a 'switch' statement.
+    Switch,      ///< An integral condition for a 'switch' statement.
+    Inspect      ///< A to-be-matched condition for a 'inspect' statement.
   };
 
   ConditionResult ActOnCondition(Scope *S, SourceLocation Loc,

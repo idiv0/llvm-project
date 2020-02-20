@@ -1466,6 +1466,9 @@ def fno_implicit_modules :
   Group<f_Group>, Flags<[DriverOption, CC1Option]>;
 def fretain_comments_from_system_headers : Flag<["-"], "fretain-comments-from-system-headers">, Group<f_Group>, Flags<[CC1Option]>;
 
+def fpattern_matching : Flag <["-"], "fpattern-matching">, Group<f_Group>,
+  Flags<[DriverOption, CC1Option]>,
+  HelpText<"Enable the 'pattern matching' language feature proposal from p1371r2">;
 def fmudflapth : Flag<["-"], "fmudflapth">, Group<f_Group>;
 def fmudflap : Flag<["-"], "fmudflap">, Group<f_Group>;
 def fnested_functions : Flag<["-"], "fnested-functions">, Group<f_Group>;

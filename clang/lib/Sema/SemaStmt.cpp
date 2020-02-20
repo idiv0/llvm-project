@@ -1256,6 +1256,15 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   return SS;
 }
 
+StmtResult Sema::ActOnStartOfInspectStmt(SourceLocation InspectLoc,
+                                        Stmt *InitStmt, ConditionResult Cond) {
+  return StmtError();
+}
+StmtResult Sema::ActOnFinishInspectStmt(SourceLocation InspectLoc, Stmt *Inspect,
+                            Stmt *BodyStmt) {
+  return StmtError();
+}
+
 void
 Sema::DiagnoseAssignmentEnum(QualType DstType, QualType SrcType,
                              Expr *SrcExpr) {

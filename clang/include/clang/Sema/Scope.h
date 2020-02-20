@@ -134,6 +134,9 @@ public:
 
     /// This is the scope of a C++ catch statement.
     CatchScope = 0x1000000,
+
+    /// This is the scope of a C++ inspect statement.
+    InspectScope = 0x2000000
   };
 
 private:
