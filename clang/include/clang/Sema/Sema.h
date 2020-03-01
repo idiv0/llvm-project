@@ -11111,6 +11111,7 @@ public:
                                     SourceLocation StmtLoc,
                                     ConditionKind CK);
   ExprResult CheckSwitchCondition(SourceLocation SwitchLoc, Expr *Cond);
+  ExprResult CheckInspectCondition(SourceLocation InspectLoc, Expr *Cond);
 
   /// CheckBooleanCondition - Diagnose problems involving the use of
   /// the given expression as a boolean condition (e.g. in an if

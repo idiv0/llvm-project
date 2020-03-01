@@ -659,6 +659,18 @@ static QualType GetTypeBeforeIntegralPromotion(const Expr *&E) {
   return E->getType();
 }
 
+ExprResult Sema::CheckInspectCondition(SourceLocation InspectLoc, Expr *Cond) {
+  // [C++ p1371r2] 5.2 Basic Model: inspect is equivalent to switch and if
+  // statements except that no conversion nor promotion takes place in
+  // evaluating the value of its condition.
+  //
+  // Pattern matching is performed on the controlling expr. 
+  //
+  // FIXME: is there anything at all to check here? Are there any relevant
+  // promotions we might be missing?
+  return Cond;
+}
+
 ExprResult Sema::CheckSwitchCondition(SourceLocation SwitchLoc, Expr *Cond) {
   class SwitchConvertDiagnoser : public ICEConvertDiagnoser {
     Expr *Cond;
@@ -1258,11 +1270,63 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
 StmtResult Sema::ActOnStartOfInspectStmt(SourceLocation InspectLoc,
                                         Stmt *InitStmt, ConditionResult Cond) {
-  return StmtError();
+  Expr *CondExpr = Cond.get().second;
+  assert((Cond.isInvalid() || CondExpr) && "inspect with no condition");
+
+  setFunctionHasBranchIntoScope();
+
+  auto *IS = InspectStmt::Create(Context, InitStmt, Cond.get().first, CondExpr);
+  getCurFunction()->InspectStack.push_back(
+      FunctionScopeInfo::InspectInfo(IS, false));
+  return IS;
 }
 StmtResult Sema::ActOnFinishInspectStmt(SourceLocation InspectLoc, Stmt *Inspect,
                             Stmt *BodyStmt) {
-  return StmtError();
+  InspectStmt *IS = cast<InspectStmt>(Inspect);
+  assert(IS == getCurFunction()->InspectStack.back().getPointer() &&
+         "inspect stack missing push/pop!");
+
+  getCurFunction()->InspectStack.pop_back();
+
+  if (!BodyStmt) return StmtError();
+  IS->setBody(BodyStmt, InspectLoc);
+
+  Expr *CondExpr = IS->getCond();
+  if (!CondExpr) return StmtError();
+
+  QualType CondType = CondExpr->getType();
+
+  WildcardPatternStmt *TheWildcardStmt = nullptr;
+  bool InspectPatternListIsErroneous = false;
+
+  for (InspectPatternStmt *IP = IS->getInspectPatternStmtList(); IP;
+       IP = IP->getNextInspectPatternStmt()) {
+    if (WildcardPatternStmt *WP = dyn_cast<WildcardPatternStmt>(IP)) {
+      if (TheWildcardStmt) {
+        //Diag(WP->getDefaultLoc(), diag::err_multiple_default_labels_defined);
+        //Diag(TheWildcardStmt->getDefaultLoc(), diag::note_duplicate_case_prev);
+
+        // FIXME: Remove the default statement from the switch block so that
+        // we'll return a valid AST.  This requires recursing down the AST and
+        // finding it, not something we are set up to do right now.  For now,
+        // just lop the entire switch stmt out of the AST.
+        InspectPatternListIsErroneous = true;
+      }
+      TheWildcardStmt = WP;
+    } else {
+    }
+  }
+
+  //if (BodyStmt)
+  //  DiagnoseEmptyStmtBody(CondExpr->getEndLoc(), BodyStmt,
+  //                        diag::warn_empty_switch_body);
+
+  // FIXME: If the case list was broken is some way, we don't have a good system
+  // to patch it up.  Instead, just return the whole substmt as broken.
+  if (InspectPatternListIsErroneous)
+    return StmtError();
+
+  return IS;
 }
 
 void

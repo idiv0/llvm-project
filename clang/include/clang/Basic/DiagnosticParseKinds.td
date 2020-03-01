@@ -583,10 +583,10 @@ def warn_cxx14_compat_constexpr_if : Warning<
   "constexpr if is incompatible with C++ standards before C++17">,
   DefaultIgnore, InGroup<CXXPre17Compat>;
 def ext_init_statement : ExtWarn<
-  "'%select{if|switch}0' initialization statements are a C++17 extension">,
+  "'%select{if|switch|inspect}0' initialization statements are a C++17 extension">,
   InGroup<CXX17>;
 def warn_cxx14_compat_init_statement : Warning<
-  "%select{if|switch}0 initialization statements are incompatible with "
+  "%select{if|switch|inspect}0 initialization statements are incompatible with "
   "C++ standards before C++17">, DefaultIgnore, InGroup<CXXPre17Compat>;
 def ext_for_range_init_stmt : ExtWarn<
   "range-based for loop initialization statements are a C++20 extension">,
@@ -595,7 +595,7 @@ def warn_cxx17_compat_for_range_init_stmt : Warning<
   "range-based for loop initialization statements are incompatible with "
   "C++ standards before C++20">, DefaultIgnore, InGroup<CXXPre20Compat>;
 def warn_empty_init_statement : Warning<
-  "empty initialization statement of '%select{if|switch|range-based for}0' "
+  "empty initialization statement of '%select{if|switch|inspect|range-based for}0' "
   "has no effect">, InGroup<EmptyInitStatement>, DefaultIgnore;
 
 // C++ derived classes

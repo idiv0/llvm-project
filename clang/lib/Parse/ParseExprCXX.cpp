@@ -1961,11 +1961,20 @@ Sema::ConditionResult Parser::ParseCXXCondition(StmtResult *InitStmt,
   ParsedAttributesWithRange attrs(AttrFactory);
   MaybeParseCXX11Attributes(attrs);
 
-  const auto WarnOnInit = [this, &CK] {
+  const auto InitInDiagCode = [&CK]() {
+    switch (CK) {
+    case Sema::ConditionKind::Switch: return 1;
+    case Sema::ConditionKind::Inspect: return 2;
+    default: return 0; // if
+    }
+    return 0;
+  };
+
+  const auto WarnOnInit = [this, &InitInDiagCode] {
     Diag(Tok.getLocation(), getLangOpts().CPlusPlus17
                                 ? diag::warn_cxx14_compat_init_statement
                                 : diag::ext_init_statement)
-        << (CK == Sema::ConditionKind::Switch);
+        << InitInDiagCode();
   };
 
   // Determine what kind of thing we have.
@@ -1980,7 +1989,7 @@ Sema::ConditionResult Parser::ParseCXXCondition(StmtResult *InitStmt,
       SourceLocation SemiLoc = Tok.getLocation();
       if (!Tok.hasLeadingEmptyMacro() && !SemiLoc.isMacroID()) {
         Diag(SemiLoc, diag::warn_empty_init_statement)
-            << (CK == Sema::ConditionKind::Switch)
+            << InitInDiagCode()
             << FixItHint::CreateRemoval(SemiLoc);
       }
       ConsumeToken();

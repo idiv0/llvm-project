@@ -285,6 +285,40 @@ protected:
     SourceLocation KeywordLoc;
   };
 
+  class InspectStmtBitfields {
+    friend class InspectStmt;
+
+    unsigned : NumStmtBits;
+
+    /// True if the InspectStmt has storage for an init statement.
+    unsigned HasInit : 1;
+
+    /// True if the InspectStmt has storage for a condition variable.
+    unsigned HasVar : 1;
+
+    /// FIXME: add state for "strict" and cover exhaustiveness and
+    /// usefulness.
+    /// unsigned AllEnumCasesCovered : 1;
+
+    /// The location of the "inspect".
+    SourceLocation InspectLoc;
+  };
+
+  class InspectPatternStmtBitfields {
+    friend class InspectPatternStmt;
+    //friend class CaseStmt;
+
+    unsigned : NumStmtBits;
+
+    /// Used by inspect pattern to store the multiple pattern
+    /// types: wildcard, identifier, etc...
+    unsigned PatternType : 4;
+
+    /// The location of the pattern specific keyword:
+    ///  "__", "<", "(", etc.
+    SourceLocation KeywordLoc;
+  };
+
   //===--- Expression bitfields classes ---===//
 
   class ExprBitfields {
@@ -977,6 +1011,8 @@ protected:
     BreakStmtBitfields BreakStmtBits;
     ReturnStmtBitfields ReturnStmtBits;
     SwitchCaseBitfields SwitchCaseBits;
+    InspectStmtBitfields InspectStmtBits;
+    InspectPatternStmtBitfields InspectPatternStmtBits;
 
     // Expressions
     ExprBitfields ExprBits;
@@ -1454,6 +1490,80 @@ public:
   }
 };
 
+// InspectPatternStmt is the base class for WildcardPattern, IdentifierPattern, etc
+class InspectPatternStmt : public Stmt {
+protected:
+  /// The location of the ":".
+  SourceLocation ColonLoc;
+
+  /// A pointer to the following specific InspectPatternStmt used by InspectStmt.
+  InspectPatternStmt *NextInspectPatternStmt = nullptr;
+
+  InspectPatternStmt(StmtClass SC, SourceLocation KWLoc, SourceLocation ColonLoc)
+      : Stmt(SC), ColonLoc(ColonLoc) {
+    setKeywordLoc(KWLoc);
+  }
+
+  InspectPatternStmt(StmtClass SC, EmptyShell) : Stmt(SC) {}
+
+public:
+  const InspectPatternStmt *getNextInspectPatternStmt() const { return NextInspectPatternStmt; }
+  InspectPatternStmt *getNextInspectPatternStmt() { return NextInspectPatternStmt; }
+  void setNextInspectPatternStmt(InspectPatternStmt *SC) { NextInspectPatternStmt = SC; }
+
+  SourceLocation getKeywordLoc() const { return InspectPatternStmtBits.KeywordLoc; }
+  void setKeywordLoc(SourceLocation L) { InspectPatternStmtBits.KeywordLoc = L; }
+  SourceLocation getColonLoc() const { return ColonLoc; }
+  void setColonLoc(SourceLocation L) { ColonLoc = L; }
+
+  inline Stmt *getSubStmt();
+  const Stmt *getSubStmt() const {
+    return const_cast<InspectPatternStmt *>(this)->getSubStmt();
+  }
+
+  SourceLocation getBeginLoc() const { return getKeywordLoc(); }
+  inline SourceLocation getEndLoc() const LLVM_READONLY;
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == WildcardPatternStmtClass;
+  }
+};
+
+class WildcardPatternStmt : public InspectPatternStmt {
+  Stmt *SubStmt;
+
+public:
+  WildcardPatternStmt(SourceLocation DL, SourceLocation CL, Stmt *substmt)
+      : InspectPatternStmt(WildcardPatternStmtClass, DL, CL), SubStmt(substmt) {}
+
+  /// Build an empty default statement.
+  explicit WildcardPatternStmt(EmptyShell Empty)
+      : InspectPatternStmt(WildcardPatternStmtClass, Empty) {}
+
+  Stmt *getSubStmt() { return SubStmt; }
+  const Stmt *getSubStmt() const { return SubStmt; }
+  void setSubStmt(Stmt *S) { SubStmt = S; }
+
+  SourceLocation getDefaultLoc() const { return getKeywordLoc(); }
+  void setDefaultLoc(SourceLocation L) { setKeywordLoc(L); }
+
+  SourceLocation getBeginLoc() const { return getKeywordLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
+    return SubStmt->getEndLoc();
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == WildcardPatternStmtClass;
+  }
+
+  // Iterators
+  child_range children() { return child_range(&SubStmt, &SubStmt + 1); }
+
+  const_child_range children() const {
+    return const_child_range(&SubStmt, &SubStmt + 1);
+  }
+};
+
 // SwitchCase is the base class for CaseStmt and DefaultStmt,
 class SwitchCase : public Stmt {
 protected:
@@ -1705,6 +1815,12 @@ Stmt *SwitchCase::getSubStmt() {
   else if (auto *DS = dyn_cast<DefaultStmt>(this))
     return DS->getSubStmt();
   llvm_unreachable("SwitchCase is neither a CaseStmt nor a DefaultStmt!");
+}
+
+Stmt *InspectPatternStmt::getSubStmt() {
+  if (auto *CS = dyn_cast<WildcardPatternStmt>(this))
+    return CS->getSubStmt();
+  llvm_unreachable("InspectPatternStmt is not a WildcardPatternStmt!");
 }
 
 /// Represents a statement that could possibly have a value and type. This
@@ -2039,6 +2155,178 @@ public:
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == IfStmtClass;
+  }
+};
+
+class InspectStmt final : public Stmt,
+                         private llvm::TrailingObjects<InspectStmt, Stmt *> {
+  friend TrailingObjects;
+
+  /// Points to a linked list of case and default statements.
+  InspectPatternStmt *FirstPattern;
+
+  // InspectStmt is followed by several trailing objects,
+  // some of which optional. Note that it would be more convenient to
+  // put the optional trailing objects at the end but this would change
+  // the order in children().
+  // The trailing objects are in order:
+  //
+  // * A "Stmt *" for the init statement.
+  //    Present if and only if hasInitStorage().
+  //
+  // * A "Stmt *" for the condition variable.
+  //    Present if and only if hasVarStorage(). This is in fact a "DeclStmt *".
+  //
+  // * A "Stmt *" for the condition.
+  //    Always present. This is in fact an "Expr *".
+  //
+  // * A "Stmt *" for the body.
+  //    Always present.
+  enum { InitOffset = 0, BodyOffsetFromCond = 1 };
+  enum { NumMandatoryStmtPtr = 2 };
+
+  unsigned numTrailingObjects(OverloadToken<Stmt *>) const {
+    return NumMandatoryStmtPtr + hasInitStorage() + hasVarStorage();
+  }
+
+  unsigned initOffset() const { return InitOffset; }
+  unsigned varOffset() const { return InitOffset + hasInitStorage(); }
+  unsigned condOffset() const {
+    return InitOffset + hasInitStorage() + hasVarStorage();
+  }
+  unsigned bodyOffset() const { return condOffset() + BodyOffsetFromCond; }
+
+  /// Build a switch statement.
+  InspectStmt(const ASTContext &Ctx, Stmt *Init, VarDecl *Var, Expr *Cond);
+
+  /// Build a empty switch statement.
+  explicit InspectStmt(EmptyShell Empty, bool HasInit, bool HasVar);
+
+public:
+  /// Create a switch statement.
+  static InspectStmt *Create(const ASTContext &Ctx, Stmt *Init, VarDecl *Var,
+                            Expr *Cond);
+
+  /// Create an empty switch statement optionally with storage for
+  /// an init expression and a condition variable.
+  static InspectStmt *CreateEmpty(const ASTContext &Ctx, bool HasInit,
+                                 bool HasVar);
+
+  /// True if this InspectStmt has storage for an init statement.
+  bool hasInitStorage() const { return InspectStmtBits.HasInit; }
+
+  /// True if this InspectStmt has storage for a condition variable.
+  bool hasVarStorage() const { return InspectStmtBits.HasVar; }
+
+  Expr *getCond() {
+    return reinterpret_cast<Expr *>(getTrailingObjects<Stmt *>()[condOffset()]);
+  }
+
+  const Expr *getCond() const {
+    return reinterpret_cast<Expr *>(getTrailingObjects<Stmt *>()[condOffset()]);
+  }
+
+  void setCond(Expr *Cond) {
+    getTrailingObjects<Stmt *>()[condOffset()] = reinterpret_cast<Stmt *>(Cond);
+  }
+
+  Stmt *getBody() { return getTrailingObjects<Stmt *>()[bodyOffset()]; }
+  const Stmt *getBody() const {
+    return getTrailingObjects<Stmt *>()[bodyOffset()];
+  }
+
+  void setBody(Stmt *Body) {
+    getTrailingObjects<Stmt *>()[bodyOffset()] = Body;
+  }
+
+  Stmt *getInit() {
+    return hasInitStorage() ? getTrailingObjects<Stmt *>()[initOffset()]
+                            : nullptr;
+  }
+
+  const Stmt *getInit() const {
+    return hasInitStorage() ? getTrailingObjects<Stmt *>()[initOffset()]
+                            : nullptr;
+  }
+
+  void setInit(Stmt *Init) {
+    assert(hasInitStorage() &&
+           "This switch statement has no storage for an init statement!");
+    getTrailingObjects<Stmt *>()[initOffset()] = Init;
+  }
+
+  /// Retrieve the variable declared in this "switch" statement, if any.
+  ///
+  /// In the following example, "x" is the condition variable.
+  /// \code
+  /// switch (int x = foo()) {
+  ///   case 0: break;
+  ///   // ...
+  /// }
+  /// \endcode
+  VarDecl *getConditionVariable();
+  const VarDecl *getConditionVariable() const {
+    return const_cast<InspectStmt *>(this)->getConditionVariable();
+  }
+
+  /// Set the condition variable in this switch statement.
+  /// The switch statement must have storage for it.
+  void setConditionVariable(const ASTContext &Ctx, VarDecl *VD);
+
+  /// If this InspectStmt has a condition variable, return the faux DeclStmt
+  /// associated with the creation of that condition variable.
+  DeclStmt *getConditionVariableDeclStmt() {
+    return hasVarStorage() ? static_cast<DeclStmt *>(
+                                 getTrailingObjects<Stmt *>()[varOffset()])
+                           : nullptr;
+  }
+
+  const DeclStmt *getConditionVariableDeclStmt() const {
+    return hasVarStorage() ? static_cast<DeclStmt *>(
+                                 getTrailingObjects<Stmt *>()[varOffset()])
+                           : nullptr;
+  }
+
+  InspectPatternStmt *getInspectPatternStmtList() { return FirstPattern; }
+  const InspectPatternStmt *getInspectPatternStmtList() const { return FirstPattern; }
+  void setInspectPatternStmtList(InspectPatternStmt *SC) { FirstPattern = SC; }
+
+  SourceLocation getInspectLoc() const { return InspectStmtBits.InspectLoc; }
+  void setInspectLoc(SourceLocation L) { InspectStmtBits.InspectLoc = L; }
+
+  void setBody(Stmt *S, SourceLocation SL) {
+    setBody(S);
+    setInspectLoc(SL);
+  }
+
+  void addInspectPatternStmt(InspectPatternStmt *SC) {
+    assert(!SC->getNextInspectPatternStmt() &&
+           "case/default already added to a switch");
+    SC->setNextInspectPatternStmt(FirstPattern);
+    FirstPattern = SC;
+  }
+
+  SourceLocation getBeginLoc() const { return getInspectLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
+    return getBody() ? getBody()->getEndLoc()
+                     : reinterpret_cast<const Stmt *>(getCond())->getEndLoc();
+  }
+
+  // Iterators
+  child_range children() {
+    return child_range(getTrailingObjects<Stmt *>(),
+                       getTrailingObjects<Stmt *>() +
+                           numTrailingObjects(OverloadToken<Stmt *>()));
+  }
+
+  const_child_range children() const {
+    return const_child_range(getTrailingObjects<Stmt *>(),
+                             getTrailingObjects<Stmt *>() +
+                                 numTrailingObjects(OverloadToken<Stmt *>()));
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == InspectStmtClass;
   }
 };
 

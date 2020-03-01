@@ -413,6 +413,20 @@ public:
     return false;
   }
 
+  /// isInspectScope - Return true if this scope is a switch scope.
+  bool isInspectScope() const {
+    for (const Scope *S = this; S; S = S->getParent()) {
+      if (S->getFlags() & Scope::InspectScope)
+        return true;
+      else if (S->getFlags() & (Scope::FnScope | Scope::ClassScope |
+                                Scope::BlockScope | Scope::TemplateParamScope |
+                                Scope::FunctionPrototypeScope |
+                                Scope::AtCatchScope | Scope::ObjCMethodScope))
+        return false;
+    }
+    return false;
+  }
+
   /// Determines whether this scope is the OpenMP directive scope
   bool isOpenMPDirectiveScope() const {
     return (getFlags() & Scope::OpenMPDirectiveScope);

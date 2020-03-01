@@ -2013,7 +2013,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
                                   : SourceRange());
           if (EmptyInitStmtSemiLoc.isValid()) {
             Diag(EmptyInitStmtSemiLoc, diag::warn_empty_init_statement)
-                << /*for-loop*/ 2
+                << /*for-loop*/ 3
                 << FixItHint::CreateRemoval(EmptyInitStmtSemiLoc);
           }
         }
