@@ -399,6 +399,7 @@ CXX2A_KEYWORD(constinit             , 0)
 
 // C++ 2b / pattern matching keywords
 PATMAT_KEYWORD(inspect)
+PATMAT_KEYWORD(__)
 PATMAT_KEYWORD(let)
 
 // C11 Extension

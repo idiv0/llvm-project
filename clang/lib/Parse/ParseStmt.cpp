@@ -180,6 +180,14 @@ Retry:
     return StmtError();
 
   case tok::identifier: {
+    // C++2b pattern matching: wildcard inspect pattern.
+    IdentifierInfo* II = Tok.getIdentifierInfo();
+    auto *CurrScope = getCurScope();
+    if (CurrScope && CurrScope->isInspectScope() &&
+        II && II->isCPlusPlusKeyword(getLangOpts()) &&
+        II->getTokenID() == tok::kw___)
+      return ParseWildcardPattern(StmtCtx);
+
     Token Next = NextToken();
     if (Next.is(tok::colon)) { // C99 6.8.1: labeled-statement
       // identifier ':' statement
@@ -260,7 +268,7 @@ Retry:
     return ParseIfStatement(TrailingElseLoc);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
     return ParseSwitchStatement(TrailingElseLoc);
-  case tok::kw_inspect:              // C++ Pattern Matching: inspect-statement
+  case tok::kw_inspect:             // C++2b Pattern Matching: inspect-statement
     return ParseInspectStatement(Attrs, StmtCtx, TrailingElseLoc);
   case tok::kw_while:               // C99 6.8.5.1: while-statement
     return ParseWhileStatement(TrailingElseLoc);
@@ -689,54 +697,71 @@ StmtResult Parser::ParsePatternStatement(InspectStmt *Inspect,
     return ParseCasePattern(Inspect, StmtCtx);
   }
 
-  if (Tok.is(tok::identifier)) {
-    // yuck, is there a better way to tell '__'
-    // from other valid identifiers in this context?
-    IdentifierInfo* II = Tok.getIdentifierInfo();
-    if (!II->getName().compare("__")) {
-      return ParseWildcardPattern(Inspect, StmtCtx);
-    }
+  //if (Tok.is(tok::identifier)) {
+  //  // yuck, is there a better way to tell '__'
+  //  // from other valid identifiers in this context?
+  //  IdentifierInfo* II = Tok.getIdentifierInfo();
+  //  if (!II->getName().compare("__")) {
+  //    return ParseWildcardPattern(Inspect, StmtCtx);
+  //  }
 
-    return ParseIdentifierPattern(Inspect, StmtCtx);
-  }
-  else {
+  //  return ParseIdentifierPattern(Inspect, StmtCtx);
+  //}
+  //else {
     ExprResult Expr(ParseExpression());
 
     if ((Tok.is(tok::colon) || (Tok.is(tok::kw_if))) && getCurScope()->isInspectScope()) {
       // Recover parsing as an expression pattern.
       return ParseExpressionPattern(Inspect, StmtCtx, Expr.get());
     }
-  }
+  //}
   return StmtError();
 }
 
-StmtResult Parser::ParseWildcardPattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx) {
-  assert((Tok.is(tok::identifier)) && "Not a wildcard pattern!");
+/// ParsePatternStatement - We have an pattern and a ':' after it.
+///
+///       pattern-statement:
+///         '__' pattern-guard[opt] ':' statement
+///
+StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
+  IdentifierInfo* II = Tok.getIdentifierInfo();
+  assert(II && II->getTokenID() == tok::kw___ && "Not a wildcard pattern!");
+  assert(getCurScope()->isInspectScope() &&
+         "Wildcard pattern should be in inspect scope");
+  SourceLocation WildcardLoc = ConsumeToken();
 
-  // '__' ':' statement
-  // ^
-
-  IdentifierInfo *II = Tok.getIdentifierInfo();
-  assert((!II->getName().compare("__")) && "Not a wildcard pattern!");
-
-  SourceLocation WilcardLoc = ConsumeToken(); // eat the identifier
-
-  // there may be a pattern guard here
-  ExprResult PatternGuard;
+  // Check for pattern-guard[opt]
+  // FIXME: move this to its own method.
+  bool IsConstexpr = false; // FIXME: check whether inspect has IsConst
+  Sema::ConditionResult Cond;
+  SourceLocation IfLoc = ConsumeToken();  // eat the 'if'.
   if (Tok.is(tok::kw_if)) {
-    ConsumeToken();
-    PatternGuard = ParseExpression();
+    IfLoc = ConsumeToken(); // eat the 'if'.
+    if (Tok.isNot(tok::l_paren)) {
+      Diag(Tok, diag::err_expected_lparen_after) << "if";
+      SkipUntil(tok::semi);
+      return StmtError();
+    }
+    // Parse the condition.
+    StmtResult InitStmt; // FIXME: not allowed in pattern matching
+    if (ParseParenExprOrCondition(&InitStmt, Cond, IfLoc,
+                                  IsConstexpr ? Sema::ConditionKind::ConstexprIf
+                                              : Sema::ConditionKind::Boolean))
+      return StmtError();
   }
 
-    // '__' ':' statement
-    //      ^
-
-  assert(Tok.is(tok::colon) && "Not a wildcard pattern!");
+  if (!Tok.is(tok::colon)) {
+    Diag(Tok, diag::err_expected_colon_after)
+      << (IfLoc.isInvalid() ? WildcardLoc : IfLoc);
+    SkipUntil(tok::semi);
+    return StmtError();
+  }
   SourceLocation ColonLoc = ConsumeToken();
 
-  // '__' ':' statement
-  //          ^
-
+  // Parse the statement
+  //
+  // '__' pattern-guard[opt] ':' statement
+  //                             ^
   StmtResult SubStmt = ParseStatement(nullptr, StmtCtx);
 
   // Broken substmt shouldn't prevent the identifier from being added to the
@@ -744,7 +769,8 @@ StmtResult Parser::ParseWildcardPattern(InspectStmt *Inspect, ParsedStmtContext 
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  return Actions.ActOnWildcardPattern(WilcardLoc, ColonLoc, SubStmt.get(), PatternGuard.get());
+  return Actions.ActOnWildcardPattern(WildcardLoc, ColonLoc, SubStmt.get(),
+                                      Cond.get().second);
 }
 
 StmtResult Parser::ParseIdentifierPattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx) {
