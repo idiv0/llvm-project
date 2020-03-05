@@ -674,7 +674,7 @@ void TextNodeDumper::VisitInspectStmt(const InspectStmt *Node) {
   if (Node->hasVarStorage())
     OS << " has_var";
 }
-void TextNodeDumper::VisitWildcardPatrternStmt(const WildcardPatternStmt *Node) {
+void TextNodeDumper::VisitWildcardPatternStmt(const WildcardPatternStmt *Node) {
 }
 
 void TextNodeDumper::VisitIdentifierPatternStmt(const IdentifierPatternStmt *Node) {
