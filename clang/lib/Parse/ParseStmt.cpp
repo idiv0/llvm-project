@@ -1766,7 +1766,6 @@ StmtResult Parser::ParseInspectStatement(ParsedAttributesWithRange &attrs,
 
   // inspect (...) { }
   //         ^
-
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "inspect";
     SkipUntil(tok::semi);
@@ -1778,15 +1777,14 @@ StmtResult Parser::ParseInspectStatement(ParsedAttributesWithRange &attrs,
   // Parse the condition.
   StmtResult Init;
   Sema::ConditionResult Cond;
-  if (ParseParenExprOrCondition(&Init, Cond, InspectLoc, Sema::ConditionKind::Inspect)) {
+  if (ParseParenExprOrCondition(&Init, Cond, InspectLoc,
+                                Sema::ConditionKind::Inspect))
     return StmtError();
-  }
 
   // inspect (...) { }
   //               ^
-
-  StmtResult Inspect = Actions.ActOnStartOfInspectStmt(InspectLoc, Init.get(), Cond);
-
+  StmtResult Inspect = Actions.ActOnStartOfInspectStmt(InspectLoc, Init.get(),
+                                                       Cond);
   if (Inspect.isInvalid()) {
     // Skip the inspect body.
     if (Tok.is(tok::l_brace)) {

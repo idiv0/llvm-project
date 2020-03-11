@@ -11117,7 +11117,7 @@ public:
     Boolean,     ///< A boolean condition, from 'if', 'while', 'for', or 'do'.
     ConstexprIf, ///< A constant boolean condition from 'if constexpr'.
     Switch,      ///< An integral condition for a 'switch' statement.
-    Inspect      ///< A condition for an 'inspect' statement
+    Inspect      ///< A condition for an 'inspect' statement.
   };
 
   ConditionResult ActOnCondition(Scope *S, SourceLocation Loc,
