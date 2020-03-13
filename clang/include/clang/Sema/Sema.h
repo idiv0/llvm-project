@@ -4199,19 +4199,14 @@ public:
 
   // pattern matching patterns
   StmtResult ActOnWildcardPattern(SourceLocation WildcardLoc,
-                                  SourceLocation ColonLoc,
-                                  Stmt *SubStmt,
+                                  SourceLocation ColonLoc, Stmt *SubStmt,
                                   Expr *PatternGuard);
   StmtResult ActOnIdentifierPattern(SourceLocation IdentifierLoc,
-                                    SourceLocation ColonLoc,
-                                    Expr *Condition,
-                                    Stmt *SubStmt,
-                                    Expr *PatternGuard);
+                                    SourceLocation ColonLoc, Expr *Condition,
+                                    Stmt *SubStmt, Expr *PatternGuard);
   StmtResult ActOnExpressionPattern(SourceLocation ExpressionLoc,
-                                    SourceLocation ColonLoc,
-                                    Expr *Condition,
-                                    Stmt *SubStmt,
-                                    Expr *PatternGuard);
+                                    SourceLocation ColonLoc, Expr *Condition,
+                                    Stmt *SubStmt, Expr *PatternGuard);
   class ConditionResult;
   StmtResult ActOnIfStmt(SourceLocation IfLoc, bool IsConstexpr,
                          Stmt *InitStmt,
@@ -4226,8 +4221,7 @@ public:
                                     ConditionResult Cond);
   StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                            Stmt *Switch, Stmt *Body);
-  StmtResult ActOnStartOfInspectStmt(SourceLocation InspectLoc,
-                                     Stmt *InitStmt,
+  StmtResult ActOnStartOfInspectStmt(SourceLocation InspectLoc, Stmt *InitStmt,
                                      ConditionResult Cond);
   StmtResult ActOnFinishInspectStmt(SourceLocation InspectLoc, Stmt *Inspect,
                                     Stmt *Body);
@@ -11134,7 +11128,7 @@ public:
                                     ConditionKind CK);
   ExprResult CheckSwitchCondition(SourceLocation SwitchLoc, Expr *Cond);
 
-  ExprResult CheckInspectCondition(SourceLocation InspectLoc, Expr* Cond);
+  ExprResult CheckInspectCondition(SourceLocation InspectLoc, Expr *Cond);
 
   /// CheckBooleanCondition - Diagnose problems involving the use of
   /// the given expression as a boolean condition (e.g. in an if

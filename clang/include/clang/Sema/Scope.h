@@ -129,12 +129,13 @@ public:
     /// This is a compound statement scope.
     CompoundStmtScope = 0x400000,
 
-    /// We are between inheritance colon and the real class/struct definition scope.
+    /// We are between inheritance colon and the real class/struct definition
+    /// scope.
     ClassInheritanceScope = 0x800000,
 
     /// This is the scope of a C++ catch statement.
     CatchScope = 0x1000000,
-    
+
     /// This is the scope of a C++ inspect statement.
     InspectScope = 0x2000000,
   };
@@ -418,10 +419,10 @@ public:
     for (const Scope *S = this; S; S = S->getParent()) {
       if (S->getFlags() & Scope::InspectScope)
         return true;
-      else if (S->getFlags() & (Scope::FnScope | Scope::ClassScope |
-        Scope::BlockScope | Scope::TemplateParamScope |
-        Scope::FunctionPrototypeScope |
-        Scope::AtCatchScope | Scope::ObjCMethodScope))
+      else if (S->getFlags() &
+               (Scope::FnScope | Scope::ClassScope | Scope::BlockScope |
+                Scope::TemplateParamScope | Scope::FunctionPrototypeScope |
+                Scope::AtCatchScope | Scope::ObjCMethodScope))
         return false;
     }
     return false;

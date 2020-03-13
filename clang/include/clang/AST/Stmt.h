@@ -983,7 +983,7 @@ protected:
 
     unsigned : NumStmtBits;
 
-    /// Used by PatternStmt to discover whether a 
+    /// Used by PatternStmt to discover whether a
     /// pattern statement has a pattern guard
     unsigned PatternStmtHasPatternGuard : 1;
 

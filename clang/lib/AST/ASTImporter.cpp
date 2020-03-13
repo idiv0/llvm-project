@@ -6046,13 +6046,13 @@ ExpectedStmt ASTNodeImporter::VisitInspectStmt(InspectStmt *S) {
     return std::move(Err);
 
   auto *ToStmt = InspectStmt::Create(Importer.getToContext(), ToInit,
-    ToConditionVariable, ToCond);
+                                     ToConditionVariable, ToCond);
   ToStmt->setInspectLoc(ToInspectLoc);
 
   // Now we have to re-chain the patterns.
   PatternStmt *LastChainedPattern = nullptr;
   for (PatternStmt *PS = S->getPatternList(); PS != nullptr;
-    PS = PS->getNextPattern()) {
+       PS = PS->getNextPattern()) {
     Expected<PatternStmt *> ToPatternOrErr = import(PS);
     if (!ToPatternOrErr)
       return ToPatternOrErr.takeError();
@@ -6075,14 +6075,15 @@ ExpectedStmt ASTNodeImporter::VisitWildcardPatternStmt(WildcardPatternStmt *S) {
   if (Err)
     return std::move(Err);
 
-  auto *ToStmt = WildcardPatternStmt::Create(Importer.getToContext(), ToPatternLoc, 
-                                             ToColonLoc, ToPatternGuard);
+  auto *ToStmt = WildcardPatternStmt::Create(
+      Importer.getToContext(), ToPatternLoc, ToColonLoc, ToPatternGuard);
   ToStmt->setSubStmt(ToSubStmt);
 
   return ToStmt;
 }
 
-ExpectedStmt ASTNodeImporter::VisitIdentifierPatternStmt(IdentifierPatternStmt *S) {
+ExpectedStmt
+ASTNodeImporter::VisitIdentifierPatternStmt(IdentifierPatternStmt *S) {
   Error Err = Error::success();
   auto ToSubStmt = importChecked(Err, S->getSubStmt());
   auto ToPatternLoc = importChecked(Err, S->getPatternLoc());
@@ -6092,15 +6093,16 @@ ExpectedStmt ASTNodeImporter::VisitIdentifierPatternStmt(IdentifierPatternStmt *
   if (Err)
     return std::move(Err);
 
-  auto *ToStmt = IdentifierPatternStmt::Create(Importer.getToContext(), ToPatternLoc, 
-                                               ToColonLoc, ToPatternGuard);
+  auto *ToStmt = IdentifierPatternStmt::Create(
+      Importer.getToContext(), ToPatternLoc, ToColonLoc, ToPatternGuard);
   ToStmt->setCond(ToCond);
-  ToStmt->setSubStmt(ToSubStmt);  
+  ToStmt->setSubStmt(ToSubStmt);
 
   return ToStmt;
 }
 
-ExpectedStmt ASTNodeImporter::VisitExpressionPatternStmt(ExpressionPatternStmt *S) {
+ExpectedStmt
+ASTNodeImporter::VisitExpressionPatternStmt(ExpressionPatternStmt *S) {
   Error Err = Error::success();
   auto ToSubStmt = importChecked(Err, S->getSubStmt());
   auto ToPatternLoc = importChecked(Err, S->getPatternLoc());
@@ -6110,8 +6112,8 @@ ExpectedStmt ASTNodeImporter::VisitExpressionPatternStmt(ExpressionPatternStmt *
   if (Err)
     return std::move(Err);
 
-  auto *ToStmt = ExpressionPatternStmt::Create(Importer.getToContext(), ToPatternLoc, 
-                                               ToColonLoc, ToPatternGuard);
+  auto *ToStmt = ExpressionPatternStmt::Create(
+      Importer.getToContext(), ToPatternLoc, ToColonLoc, ToPatternGuard);
   ToStmt->setCond(ToCond);
   ToStmt->setSubStmt(ToSubStmt);
 

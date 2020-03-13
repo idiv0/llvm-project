@@ -381,9 +381,15 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
   case Stmt::DefaultStmtClass:  EmitDefaultStmt(cast<DefaultStmt>(*S));   break;
   case Stmt::CaseStmtClass:     EmitCaseStmt(cast<CaseStmt>(*S));         break;
   case Stmt::SEHLeaveStmtClass: EmitSEHLeaveStmt(cast<SEHLeaveStmt>(*S)); break;
-  case Stmt::WildcardPatternStmtClass:   EmitWildcardPatternStmt(cast<WildcardPatternStmt>(*S)); break;
-  case Stmt::IdentifierPatternStmtClass: EmitIdentifierPatternStmt(cast<IdentifierPatternStmt>(*S)); break;
-  case Stmt::ExpressionPatternStmtClass: EmitExpressionPatternStmt(cast<ExpressionPatternStmt>(*S)); break;
+  case Stmt::WildcardPatternStmtClass:
+    EmitWildcardPatternStmt(cast<WildcardPatternStmt>(*S));
+    break;
+  case Stmt::IdentifierPatternStmtClass:
+    EmitIdentifierPatternStmt(cast<IdentifierPatternStmt>(*S));
+    break;
+  case Stmt::ExpressionPatternStmtClass:
+    EmitExpressionPatternStmt(cast<ExpressionPatternStmt>(*S));
+    break;
   }
 
   return true;
@@ -1752,16 +1758,16 @@ void CodeGenFunction::EmitInspectStmt(const InspectStmt &S) {
   if (S.getConditionVariable())
     EmitDecl(*S.getConditionVariable());
 
-  const PatternStmt* PS = S.getPatternList();
+  const PatternStmt *PS = S.getPatternList();
   assert(PS && "No patterns found in inspect statement");
 
   // This meets our "first match" semantics,
   // clearly there are optimisations to be made...
-  llvm::BasicBlock* ContBlock = createBasicBlock("inspect.end");
+  llvm::BasicBlock *ContBlock = createBasicBlock("inspect.end");
 
   // YUCK! Am I really responsible for de-conflicting
   // block names? I can't see this happening elsewhere in
-  // this file but if/else does emit an incrementing 
+  // this file but if/else does emit an incrementing
   // counter in its blocks. How?
   auto nextCount = 0;
   auto newPatternTest = [&nextCount, this]() {
@@ -1771,27 +1777,28 @@ void CodeGenFunction::EmitInspectStmt(const InspectStmt &S) {
 
   auto patternBodyCount = 0;
   auto newPatternBody = [&patternBodyCount, this]() {
-    auto name = llvm::join_items("", "pattern.body", llvm::itostr(patternBodyCount++));
+    auto name =
+        llvm::join_items("", "pattern.body", llvm::itostr(patternBodyCount++));
     return createBasicBlock(name);
   };
 
   auto patternGuardCount = 0;
   auto newPatternGuard = [&patternGuardCount, this]() {
-    auto name = llvm::join_items("", "pattern.guard", llvm::itostr(patternGuardCount++));
+    auto name = llvm::join_items("", "pattern.guard",
+                                 llvm::itostr(patternGuardCount++));
     return createBasicBlock(name);
   };
 
-  llvm::BasicBlock* NextPatternTest = newPatternTest();
+  llvm::BasicBlock *NextPatternTest = newPatternTest();
   while (PS) {
     auto *thisPattern = NextPatternTest;
 
-    // we jump to our next pattern test 
+    // we jump to our next pattern test
     // unless there are no more patterns.
     const bool LastPattern = !PS->getNextPattern();
     if (LastPattern) {
       NextPatternTest = ContBlock;
-    }
-    else {
+    } else {
       NextPatternTest = newPatternTest();
     }
 
@@ -1799,47 +1806,51 @@ void CodeGenFunction::EmitInspectStmt(const InspectStmt &S) {
 
     if (const auto *WPS = dyn_cast<WildcardPatternStmt>(PS)) {
       // we don't emit a "body" block for wildcard patterns
-      // as the "test" block will do, and that's what we 
+      // as the "test" block will do, and that's what we
       // jump to from previous patterns
       EmitBlock(thisPattern);
 
       if (hasGuard) {
-        EmitBranchOnBoolExpr(PS->getPatternGuard(), thisPattern, NextPatternTest, getProfileCount(PS->getSubStmt()));
+        EmitBranchOnBoolExpr(PS->getPatternGuard(), thisPattern,
+                             NextPatternTest,
+                             getProfileCount(PS->getSubStmt()));
       }
 
       EmitStmt(WPS->getSubStmt());
       EmitBranch(ContBlock);
-    }
-    else if (const auto *IPS = dyn_cast<IdentifierPatternStmt>(PS)) {
+    } else if (const auto *IPS = dyn_cast<IdentifierPatternStmt>(PS)) {
       EmitBlock(thisPattern);
       auto *body = newPatternBody();
-      
+
       if (hasGuard) {
         auto *guardBlock = newPatternGuard();
-        EmitBranchOnBoolExpr(IPS->getCond(), guardBlock, NextPatternTest, getProfileCount(PS->getSubStmt()));
+        EmitBranchOnBoolExpr(IPS->getCond(), guardBlock, NextPatternTest,
+                             getProfileCount(PS->getSubStmt()));
         EmitBlock(guardBlock);
-        EmitBranchOnBoolExpr(PS->getPatternGuard(), body, NextPatternTest, getProfileCount(PS->getSubStmt()));
-      }
-      else {
-        EmitBranchOnBoolExpr(IPS->getCond(), body, NextPatternTest, getProfileCount(PS->getSubStmt()));
+        EmitBranchOnBoolExpr(PS->getPatternGuard(), body, NextPatternTest,
+                             getProfileCount(PS->getSubStmt()));
+      } else {
+        EmitBranchOnBoolExpr(IPS->getCond(), body, NextPatternTest,
+                             getProfileCount(PS->getSubStmt()));
       }
 
       EmitBlock(body);
       EmitStmt(IPS->getSubStmt());
       EmitBranch(ContBlock);
-    }
-    else if (const auto *EPS = dyn_cast<ExpressionPatternStmt>(PS)) {
+    } else if (const auto *EPS = dyn_cast<ExpressionPatternStmt>(PS)) {
       EmitBlock(thisPattern);
       auto *body = newPatternBody();
 
       if (hasGuard) {
         auto *guardBlock = newPatternGuard();
-        EmitBranchOnBoolExpr(EPS->getCond(), guardBlock, NextPatternTest, getProfileCount(PS->getSubStmt()));
+        EmitBranchOnBoolExpr(EPS->getCond(), guardBlock, NextPatternTest,
+                             getProfileCount(PS->getSubStmt()));
         EmitBlock(guardBlock);
-        EmitBranchOnBoolExpr(PS->getPatternGuard(), body, NextPatternTest, getProfileCount(PS->getSubStmt()));
-      }
-      else {
-        EmitBranchOnBoolExpr(EPS->getCond(), body, NextPatternTest, getProfileCount(PS->getSubStmt()));
+        EmitBranchOnBoolExpr(PS->getPatternGuard(), body, NextPatternTest,
+                             getProfileCount(PS->getSubStmt()));
+      } else {
+        EmitBranchOnBoolExpr(EPS->getCond(), body, NextPatternTest,
+                             getProfileCount(PS->getSubStmt()));
       }
 
       EmitBlock(body);
@@ -1854,17 +1865,19 @@ void CodeGenFunction::EmitInspectStmt(const InspectStmt &S) {
 }
 
 void CodeGenFunction::EmitWildcardPatternStmt(const WildcardPatternStmt &S) {
-  llvm::BasicBlock* PatternDest = createBasicBlock("pat.bb");
+  llvm::BasicBlock *PatternDest = createBasicBlock("pat.bb");
   EmitBlock(PatternDest);
 }
 
-void CodeGenFunction::EmitIdentifierPatternStmt(const IdentifierPatternStmt &S) {
-  llvm::BasicBlock* PatternDest = createBasicBlock("pat.bb");
+void CodeGenFunction::EmitIdentifierPatternStmt(
+    const IdentifierPatternStmt &S) {
+  llvm::BasicBlock *PatternDest = createBasicBlock("pat.bb");
   EmitBlock(PatternDest);
 }
 
-void CodeGenFunction::EmitExpressionPatternStmt(const ExpressionPatternStmt &S) {
-  llvm::BasicBlock* PatternDest = createBasicBlock("pat.bb");
+void CodeGenFunction::EmitExpressionPatternStmt(
+    const ExpressionPatternStmt &S) {
+  llvm::BasicBlock *PatternDest = createBasicBlock("pat.bb");
   EmitBlock(PatternDest);
 }
 

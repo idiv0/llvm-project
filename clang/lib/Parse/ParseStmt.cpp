@@ -160,7 +160,7 @@ StmtResult Parser::ParseStatementOrDeclarationAfterAttributes(
   StmtResult Res;
   SourceLocation GNUAttributeLoc;
 
-  auto IsWildcardPatternIdentifier = [](IdentifierInfo* II, Scope *S) {
+  auto IsWildcardPatternIdentifier = [](IdentifierInfo *II, Scope *S) {
     if (!II || !S)
       return false;
 
@@ -284,7 +284,7 @@ Retry:
     return ParseIfStatement(TrailingElseLoc);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
     return ParseSwitchStatement(TrailingElseLoc);
-  case tok::kw_inspect:             // C++2b Pattern Matching: inspect-statement
+  case tok::kw_inspect: // C++2b Pattern Matching: inspect-statement
     return ParseInspectStatement(Attrs, StmtCtx, TrailingElseLoc);
   case tok::kw_while:               // C99 6.8.5.1: while-statement
     return ParseWhileStatement(TrailingElseLoc);
@@ -694,26 +694,22 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributesWithRange &attrs,
 ///         identifier ':' statement
 ///         constant-expression ':' statement
 ///
-StmtResult Parser::ParsePatternStatement(InspectStmt *Inspect, 
+StmtResult Parser::ParsePatternStatement(InspectStmt *Inspect,
                                          ParsedAttributesWithRange &attrs,
                                          ParsedStmtContext StmtCtx) {
   if (Tok.is(tok::l_square)) {
     return ParseStructuredBindingPattern(Inspect, StmtCtx);
-  }
-  else if (Tok.is(tok::less)) {
+  } else if (Tok.is(tok::less)) {
     return ParseTypedPattern(Inspect, StmtCtx);
-  }
-  else if (Tok.is(tok::l_paren)) {
+  } else if (Tok.is(tok::l_paren)) {
     return ParseParenthesisedPattern(Inspect, StmtCtx);
-  }
-  else if (Tok.is(tok::kw_let)) {
+  } else if (Tok.is(tok::kw_let)) {
     return ParseBindingPattern(Inspect, StmtCtx);
-  }
-  else if (Tok.is(tok::kw_case)) {
+  } else if (Tok.is(tok::kw_case)) {
     return ParseCasePattern(Inspect, StmtCtx);
   }
 
-  //if (Tok.is(tok::identifier)) {
+  // if (Tok.is(tok::identifier)) {
   //  // yuck, is there a better way to tell '__'
   //  // from other valid identifiers in this context?
   //  IdentifierInfo* II = Tok.getIdentifierInfo();
@@ -723,13 +719,14 @@ StmtResult Parser::ParsePatternStatement(InspectStmt *Inspect,
 
   //  return ParseIdentifierPattern(Inspect, StmtCtx);
   //}
-  //else {
-    ExprResult Expr(ParseExpression());
+  // else {
+  ExprResult Expr(ParseExpression());
 
-    if ((Tok.is(tok::colon) || (Tok.is(tok::kw_if))) && getCurScope()->isInspectScope()) {
-      // Recover parsing as an expression pattern.
-      return ParseExpressionPattern(Inspect, StmtCtx, Expr.get());
-    }
+  if ((Tok.is(tok::colon) || (Tok.is(tok::kw_if))) &&
+      getCurScope()->isInspectScope()) {
+    // Recover parsing as an expression pattern.
+    return ParseExpressionPattern(Inspect, StmtCtx, Expr.get());
+  }
   //}
   return StmtError();
 }
@@ -740,7 +737,7 @@ StmtResult Parser::ParsePatternStatement(InspectStmt *Inspect,
 ///         '__' pattern-guard[opt] ':' statement
 ///
 StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
-  IdentifierInfo* II = Tok.getIdentifierInfo();
+  IdentifierInfo *II = Tok.getIdentifierInfo();
   assert(II && II->getName() == "__" && "Not a wildcard pattern!");
   assert(getCurScope()->isInspectScope() &&
          "Wildcard pattern should be in inspect scope");
@@ -768,7 +765,7 @@ StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
 
   if (!Tok.is(tok::colon)) {
     Diag(Tok, diag::err_expected_colon_after)
-      << (IfLoc.isInvalid() ? WildcardLoc : IfLoc);
+        << (IfLoc.isInvalid() ? WildcardLoc : IfLoc);
     SkipUntil(tok::semi);
     return StmtError();
   }
@@ -789,7 +786,8 @@ StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
                                       Cond.get().second);
 }
 
-StmtResult Parser::ParseIdentifierPattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx) {
+StmtResult Parser::ParseIdentifierPattern(InspectStmt *Inspect,
+                                          ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::identifier)) && "Not an identifier pattern!");
 
   // identifier ':' statement
@@ -797,8 +795,9 @@ StmtResult Parser::ParseIdentifierPattern(InspectStmt *Inspect, ParsedStmtContex
   SourceLocation IdentifierLocation = Tok.getLocation();
   ExprResult Identifier = ParseExpression();
 
-  ExprResult Condition = Actions.ActOnBinOp(getCurScope(), IdentifierLocation,
-    tok::TokenKind::equalequal, Identifier.get(), Inspect->getCond());
+  ExprResult Condition = Actions.ActOnBinOp(
+      getCurScope(), IdentifierLocation, tok::TokenKind::equalequal,
+      Identifier.get(), Inspect->getCond());
 
   // there may be a pattern guard here
   ExprResult PatternGuard;
@@ -821,16 +820,20 @@ StmtResult Parser::ParseIdentifierPattern(InspectStmt *Inspect, ParsedStmtContex
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  return Actions.ActOnIdentifierPattern(IdentifierLocation, ColonLoc, Condition.get(), 
-                                        SubStmt.get(), PatternGuard.get());
+  return Actions.ActOnIdentifierPattern(IdentifierLocation, ColonLoc,
+                                        Condition.get(), SubStmt.get(),
+                                        PatternGuard.get());
 }
 
-StmtResult Parser::ParseExpressionPattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx, Expr* ConstantExpr) {
+StmtResult Parser::ParseExpressionPattern(InspectStmt *Inspect,
+                                          ParsedStmtContext StmtCtx,
+                                          Expr *ConstantExpr) {
 
   SourceLocation ExpressionLoc = Tok.getLocation();
 
   ExprResult Condition = Actions.ActOnBinOp(getCurScope(), ExpressionLoc,
-    tok::TokenKind::equalequal, ConstantExpr, Inspect->getCond());
+                                            tok::TokenKind::equalequal,
+                                            ConstantExpr, Inspect->getCond());
 
   // there may be a pattern guard here
   ExprResult PatternGuard;
@@ -853,31 +856,37 @@ StmtResult Parser::ParseExpressionPattern(InspectStmt *Inspect, ParsedStmtContex
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  return Actions.ActOnExpressionPattern(ExpressionLoc, ColonLoc, Condition.get(), 
-                                        SubStmt.get(), PatternGuard.get());
+  return Actions.ActOnExpressionPattern(ExpressionLoc, ColonLoc,
+                                        Condition.get(), SubStmt.get(),
+                                        PatternGuard.get());
 }
 
-StmtResult Parser::ParseStructuredBindingPattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx) {
+StmtResult Parser::ParseStructuredBindingPattern(InspectStmt *Inspect,
+                                                 ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::l_square)) && "Not a structured binding pattern!");
   return StmtError();
 }
 
-StmtResult Parser::ParseTypedPattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx) {
+StmtResult Parser::ParseTypedPattern(InspectStmt *Inspect,
+                                     ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::less)) && "Not a typed pattern!");
   return StmtError();
 }
 
-StmtResult Parser::ParseParenthesisedPattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx) {
+StmtResult Parser::ParseParenthesisedPattern(InspectStmt *Inspect,
+                                             ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::l_paren)) && "Not a parenthsised pattern!");
   return StmtError();
 }
 
-StmtResult Parser::ParseCasePattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx) {
+StmtResult Parser::ParseCasePattern(InspectStmt *Inspect,
+                                    ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::kw_case)) && "Not a case pattern!");
   return StmtError();
 }
 
-StmtResult Parser::ParseBindingPattern(InspectStmt *Inspect, ParsedStmtContext StmtCtx) {
+StmtResult Parser::ParseBindingPattern(InspectStmt *Inspect,
+                                       ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::kw_let)) && "Not a binding pattern!");
   return StmtError();
 }
@@ -1759,10 +1768,10 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
 ///       inspect-statement:
 /// [C++]   'inspect' '(' condition ')' statement
 StmtResult Parser::ParseInspectStatement(ParsedAttributesWithRange &attrs,
-                                         ParsedStmtContext StmtCtx, 
+                                         ParsedStmtContext StmtCtx,
                                          SourceLocation *TrailingElseLoc) {
   assert(Tok.is(tok::kw_inspect) && "Not an inspect stmt!");
-  SourceLocation InspectLoc = ConsumeToken();  // eat the 'inspect'.
+  SourceLocation InspectLoc = ConsumeToken(); // eat the 'inspect'.
 
   // inspect (...) { }
   //         ^
@@ -1783,8 +1792,8 @@ StmtResult Parser::ParseInspectStatement(ParsedAttributesWithRange &attrs,
 
   // inspect (...) { }
   //               ^
-  StmtResult Inspect = Actions.ActOnStartOfInspectStmt(InspectLoc, Init.get(),
-                                                       Cond);
+  StmtResult Inspect =
+      Actions.ActOnStartOfInspectStmt(InspectLoc, Init.get(), Cond);
   if (Inspect.isInvalid()) {
     // Skip the inspect body.
     if (Tok.is(tok::l_brace)) {

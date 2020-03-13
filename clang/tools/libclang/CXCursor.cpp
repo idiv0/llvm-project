@@ -164,7 +164,7 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::ExpressionPatternStmtClass:
     K = CXCursor_ExpressionPatternStmt;
     break;
-  
+
   case Stmt::WhileStmtClass:
     K = CXCursor_WhileStmt;
     break;
