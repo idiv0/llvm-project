@@ -518,9 +518,8 @@ StmtResult Sema::ActOnWildcardPattern(SourceLocation WildcardLoc,
                                       Stmt *SubStmt,
                                       Expr *PatternGuard) {
 
-  if (getCurFunction()->InspectStack.empty()) {
+  if (getCurFunction()->InspectStack.empty())
     return StmtError();
-  }
 
   auto* WPS = WildcardPatternStmt::Create(Context, WildcardLoc, 
                                           ColonLoc, PatternGuard);
