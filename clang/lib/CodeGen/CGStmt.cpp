@@ -1752,6 +1752,9 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 }
 
 void CodeGenFunction::EmitInspectStmt(const InspectStmt &S) {
+  // FIXME: check if we can constant fold to simple integer,
+  // just like switch does.
+
   if (S.getInit())
     EmitStmt(S.getInit());
 
