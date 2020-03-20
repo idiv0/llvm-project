@@ -1797,8 +1797,9 @@ void CodeGenFunction::EmitWildcardPatternStmt(const WildcardPatternStmt &S) {
   // Unless this is the last pattern in the inspect statement, create a new
   // basic block placeholder for the next pattern to be able to point to it.
   auto *ThisPattern = InspectCtx.NextPattern;
-  auto *NextPattern = S.getNextPattern() ?
-    createBasicBlock(GetPatternName(S.getNextPattern())) : InspectCtx.InspectExit;
+  auto *NextPattern = S.getNextPattern()
+                          ? createBasicBlock(GetPatternName(S.getNextPattern()))
+                          : InspectCtx.InspectExit;
   InspectCtx.NextPattern = NextPattern;
 
   // Emit code for the current pattern test.
@@ -1806,8 +1807,7 @@ void CodeGenFunction::EmitWildcardPatternStmt(const WildcardPatternStmt &S) {
 
   // Do the proper handling in the presence of a pattern guard.
   if (S.hasPatternGuard())
-    EmitBranchOnBoolExpr(S.getPatternGuard(), ThisPattern,
-                         NextPattern,
+    EmitBranchOnBoolExpr(S.getPatternGuard(), ThisPattern, NextPattern,
                          getProfileCount(S.getSubStmt()));
 
   // Emit code for the statement following the pattern and branch to the
