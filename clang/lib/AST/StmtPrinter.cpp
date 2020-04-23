@@ -310,7 +310,7 @@ void StmtPrinter::VisitWildcardPatternStmt(WildcardPatternStmt *Node) {
 
 void StmtPrinter::VisitIdentifierPatternStmt(IdentifierPatternStmt *Node) {
   Indent();
-  PrintExpr(Node->getCond());
+  // FIXME: find a way to print Node->getVar()
   if (Node->getPatternGuard()) {
     PrintExpr(Node->getPatternGuard());
   }
