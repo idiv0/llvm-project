@@ -1008,7 +1008,7 @@ class InspectStmt final : public Stmt,
   /// Points to a linked list of patterns
   PatternStmt *FirstPattern;
 
-  // true if this is a constexpr inspect
+  // True if this is a constexpr inspect
   bool ConstexprInspect;
 
   // InspectStmt is followed by several trailing objects,
