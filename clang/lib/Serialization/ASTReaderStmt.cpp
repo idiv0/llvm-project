@@ -305,7 +305,7 @@ void ASTStmtReader::VisitWildcardPatternStmt(WildcardPatternStmt *S) {
 
 void ASTStmtReader::VisitIdentifierPatternStmt(IdentifierPatternStmt *S) {
   VisitPatternStmt(S);
-  S->setVar(readDeclAs<VarDecl>());
+  S->setVar(Record.readSubStmt());
   S->setSubStmt(Record.readSubStmt());
 }
 

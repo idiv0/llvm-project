@@ -848,6 +848,9 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
   }
   SourceLocation ColonLoc = ConsumeToken();
 
+  auto IPS = Actions.ActOnIdentifierPattern(IdentifierLoc, ColonLoc, II,
+                                            nullptr, Cond.get().second);
+
   // Parse the statement
   //
   //   identifier pattern-guard[opt] ':' statement
@@ -859,8 +862,11 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  return Actions.ActOnIdentifierPattern(IdentifierLoc, ColonLoc, II,
-                                        SubStmt.get(), Cond.get().second);
+  IdentifierPatternStmt *IP = dyn_cast<IdentifierPatternStmt>(IPS.get());
+  IP->setSubStmt(SubStmt.get());
+
+  PatternScope.Exit();
+  return IPS;
 }
 
 StmtResult Parser::ParseExpressionPattern(InspectStmt *Inspect,
