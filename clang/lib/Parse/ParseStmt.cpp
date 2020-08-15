@@ -695,9 +695,9 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributesWithRange &attrs,
 /// ParsePatternStatement - We have an pattern and a ':' after it.
 ///
 ///       pattern-statement:
-///         __ ':' statement
-///         identifier ':' statement
-///         constant-expression ':' statement
+///         __ '=>' statement
+///         identifier '=>' statement
+///         constant-expression '=>' statement
 ///
 StmtResult Parser::ParsePatternStatement(InspectStmt *Inspect,
                                          ParsedAttributesWithRange &attrs,
@@ -727,7 +727,7 @@ StmtResult Parser::ParsePatternStatement(InspectStmt *Inspect,
   // else {
   ExprResult Expr(ParseExpression());
 
-  if ((Tok.is(tok::colon) || (Tok.is(tok::kw_if))) &&
+  if ((Tok.is(tok::equalarrow) || (Tok.is(tok::kw_if))) &&
       getCurScope()->isInspectScope()) {
     // Recover parsing as an expression pattern.
     return ParseExpressionPattern(Inspect, StmtCtx, Expr.get());
@@ -764,10 +764,10 @@ bool Parser::ParsePatternGuard(Sema::ConditionResult &Cond,
 
 /// ParseWildcardPattern - We have a '__' wildcard that matches any
 /// value from the inspect condition. The statement comes after the
-/// ':'.
+/// '=>'.
 ///
 ///       wildcard-pattern:
-///         '__' pattern-guard[opt] ':' statement
+///         '__' pattern-guard[opt] '=>' statement
 ///
 StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
   IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -787,8 +787,8 @@ StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
     if (!ParsePatternGuard(Cond, IfLoc, false /*IsConstexprIf*/))
       return StmtError();
 
-  if (!Tok.is(tok::colon)) {
-    Diag(Tok, diag::err_expected_colon_after)
+  if (!Tok.is(tok::equalarrow)) {
+    Diag(Tok, diag::err_expected_equalarrow_after)
         << (IfLoc.isInvalid() ? WildcardLoc : IfLoc);
     SkipUntil(tok::semi);
     return StmtError();
@@ -797,8 +797,8 @@ StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
 
   // Parse the statement
   //
-  // '__' pattern-guard[opt] ':' statement
-  //                             ^
+  // '__' pattern-guard[opt] '=>' statement
+  //                              ^
   StmtResult SubStmt = ParseStatement(nullptr, StmtCtx);
 
   // Broken substmt shouldn't prevent the identifier from being added to the
@@ -814,17 +814,17 @@ StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
 
 /// ParseIdentifierPattern - We have an identifier that matches any value
 /// and binds back to the inspect condition. It can optionally contain a
-/// pattern guard. The statement comes after the ':'.
+/// pattern guard. The statement comes after the '=>'.
 ///
 ///       identifier-pattern:
-///         identifier pattern-guard[opt] ':' statement
+///         identifier pattern-guard[opt] '=>' statement
 ///
 StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::identifier)) && "Not an identifier pattern!");
   assert(getCurScope()->isInspectScope() &&
          "Identifier pattern should be in inspect scope");
   // Get the identifier
-  //   identifier pattern-guard[opt] ':' statement
+  //   identifier pattern-guard[opt] '=>' statement
   //   ^
   IdentifierInfo *II = Tok.getIdentifierInfo();
   SourceLocation IdentifierLoc = ConsumeToken();
@@ -840,8 +840,8 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
     if (!ParsePatternGuard(Cond, IfLoc, false /*IsConstexprIf*/))
       return StmtError();
 
-  if (!Tok.is(tok::colon)) {
-    Diag(Tok, diag::err_expected_colon_after)
+  if (!Tok.is(tok::equalarrow)) {
+    Diag(Tok, diag::err_expected_equalarrow_after)
         << (IfLoc.isInvalid() ? IdentifierLoc : IfLoc);
     SkipUntil(tok::semi);
     return StmtError();
@@ -853,7 +853,7 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
 
   // Parse the statement
   //
-  //   identifier pattern-guard[opt] ':' statement
+  //   identifier pattern-guard[opt] '=>' statement
   //                                     ^
   StmtResult SubStmt = ParseStatement(nullptr, StmtCtx);
 
@@ -886,13 +886,13 @@ StmtResult Parser::ParseExpressionPattern(InspectStmt *Inspect,
     PatternGuard = ParseExpression();
   }
 
-  // constant-expression ':' statement
+  // constant-expression '=>' statement
   //                     ^
-  assert(Tok.is(tok::colon) && "Not an identifier pattern!");
+  assert(Tok.is(tok::equalarrow) && "Not an identifier pattern!");
   SourceLocation ColonLoc = ConsumeToken();
 
-  // constant-expression ':' statement
-  //                         ^
+  // constant-expression '=>' statement
+  //                          ^
   StmtResult SubStmt = ParseStatement(nullptr, StmtCtx);
 
   // Broken substmt shouldn't prevent the identifier from being added to the
