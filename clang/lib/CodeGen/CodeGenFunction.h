@@ -3017,7 +3017,7 @@ public:
   void EmitCaseStmt(const CaseStmt &S);
   void EmitCaseStmtRange(const CaseStmt &S);
 
-  void EmitInspectStmt(const InspectStmt &S);
+  void EmitInspectExpr(const InspectExpr &S);
   void EmitWildcardPatternStmt(const WildcardPatternStmt &S);
   void EmitIdentifierPatternStmt(const IdentifierPatternStmt &S);
   void EmitExpressionPatternStmt(const ExpressionPatternStmt &S);

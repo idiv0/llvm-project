@@ -1765,3 +1765,76 @@ CUDAKernelCallExpr *CUDAKernelCallExpr::CreateEmpty(const ASTContext &Ctx,
                            alignof(CUDAKernelCallExpr));
   return new (Mem) CUDAKernelCallExpr(NumArgs, Empty);
 }
+
+InspectExpr::InspectExpr(const ASTContext &Ctx, Stmt *Init, VarDecl *Var,
+                         Expr *Cond, bool IsConstexpr, bool ExplicitResultType)
+    : Expr(InspectExprClass, QualType(), VK_RValue, OK_Ordinary,
+           /*TypeDependent=*/false,
+           /*ValueDependent=*/false,
+           /*InstantiationDependent=*/false,
+           /*ContainsUnexpandedParameterPack=*/false), FirstPattern(nullptr),
+      ConstexprInspect(IsConstexpr), ExplicitResultType(ExplicitResultType) {
+
+  bool HasInit = Init != nullptr;
+  bool HasVar = Var != nullptr;
+  InspectExprBits.HasInit = HasInit;
+  InspectExprBits.HasVar = HasVar;
+
+  setCond(Cond);
+  setBody(nullptr);
+  if (HasInit)
+    setInit(Init);
+  if (HasVar)
+    setConditionVariable(Ctx, Var);
+
+  setInspectLoc(SourceLocation{});
+}
+
+InspectExpr::InspectExpr(EmptyShell Empty, bool HasInit, bool HasVar)
+    : Expr(InspectExprClass, QualType(), VK_RValue, OK_Ordinary,
+           /*TypeDependent=*/false,
+           /*ValueDependent=*/false,
+           /*InstantiationDependent=*/false,
+           /*ContainsUnexpandedParameterPack=*/false), FirstPattern(nullptr),
+      ConstexprInspect(false), ExplicitResultType(false) {
+
+  InspectExprBits.HasInit = HasInit;
+  InspectExprBits.HasVar = HasVar;
+}
+
+InspectExpr *InspectExpr::Create(const ASTContext &Ctx, Stmt *Init,
+                                 VarDecl *Var, Expr *Cond, bool IsConstexpr,
+                                 bool ExplicitResultType) {
+  void *Mem = Ctx.Allocate(totalSizeToAlloc<Stmt *>(NumMandatoryStmtPtr),
+                           alignof(InspectExpr));
+  return new (Mem)
+      InspectExpr(Ctx, Init, Var, Cond, IsConstexpr, ExplicitResultType);
+}
+
+InspectExpr *InspectExpr::CreateEmpty(const ASTContext &Ctx, bool HasInit,
+                                      bool HasVar) {
+  void *Mem = Ctx.Allocate(totalSizeToAlloc<Stmt *>(NumMandatoryStmtPtr),
+                           alignof(InspectExpr));
+  return new (Mem) InspectExpr(EmptyShell(), HasInit, HasVar);
+}
+
+VarDecl *InspectExpr::getConditionVariable() {
+  auto *DS = getConditionVariableDeclStmt();
+  if (!DS)
+    return nullptr;
+  return cast<VarDecl>(DS->getSingleDecl());
+}
+
+void InspectExpr::setConditionVariable(const ASTContext &Ctx, VarDecl *V) {
+  assert(hasVarStorage() &&
+         "This inspect statement has no storage for a condition variable!");
+
+  if (!V) {
+    getTrailingObjects<Stmt *>()[varOffset()] = nullptr;
+    return;
+  }
+
+  SourceRange VarRange = V->getSourceRange();
+  getTrailingObjects<Stmt *>()[varOffset()] = new (Ctx)
+      DeclStmt(DeclGroupRef(V), VarRange.getBegin(), VarRange.getEnd());
+}

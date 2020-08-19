@@ -1435,7 +1435,7 @@ void JSONNodeDumper::VisitCaseStmt(const CaseStmt *CS) {
   attributeOnlyIfTrue("isGNURange", CS->caseStmtIsGNURange());
 }
 
-void JSONNodeDumper::VisitInspectStmt(const InspectStmt *SS) {
+void JSONNodeDumper::VisitInspectExpr(const InspectExpr *SS) {
   attributeOnlyIfTrue("hasInit", SS->hasInitStorage());
   attributeOnlyIfTrue("hasVar", SS->hasVarStorage());
 }

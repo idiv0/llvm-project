@@ -4220,12 +4220,7 @@ public:
                                     Stmt *InitStmt,
                                     ConditionResult Cond);
   StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
-                                           Stmt *Switch, Stmt *Body);
-  StmtResult ActOnStartOfInspectStmt(SourceLocation InspectLoc, Stmt *InitStmt,
-                                     ConditionResult Cond, bool IsConstexpr,
-                                     bool ExplicitReturnType);
-  StmtResult ActOnFinishInspectStmt(SourceLocation InspectLoc, Stmt *Inspect,
-                                    Stmt *Body);
+                                   Stmt *Switch, Stmt *Body);
   StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ConditionResult Cond,
                             Stmt *Body);
   StmtResult ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
@@ -5088,6 +5083,14 @@ public:
   /// literal was successfully completed.  ^(int x){...}
   ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc, Stmt *Body,
                                 Scope *CurScope);
+
+  //===---------------------------- Pattern Matching ----------------------===//
+
+  ExprResult ActOnStartOfInspectExpr(SourceLocation InspectLoc, Stmt *InitStmt,
+                                     ConditionResult Cond, bool IsConstexpr,
+                                     bool ExplicitReturnType);
+  ExprResult ActOnFinishInspectExpr(SourceLocation InspectLoc, Expr *Inspect,
+                                    Stmt *Body);
 
   //===---------------------------- Clang Extensions ----------------------===//
 

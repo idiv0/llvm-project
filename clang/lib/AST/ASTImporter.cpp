@@ -549,7 +549,7 @@ namespace clang {
     ExpectedStmt VisitAttributedStmt(AttributedStmt *S);
     ExpectedStmt VisitIfStmt(IfStmt *S);
     ExpectedStmt VisitSwitchStmt(SwitchStmt *S);
-    ExpectedStmt VisitInspectStmt(InspectStmt *S);
+    ExpectedStmt VisitInspectExpr(InspectExpr *S);
     ExpectedStmt VisitWildcardPatternStmt(WildcardPatternStmt *S);
     ExpectedStmt VisitIdentifierPatternStmt(IdentifierPatternStmt *S);
     ExpectedStmt VisitExpressionPatternStmt(ExpressionPatternStmt *S);
@@ -6036,7 +6036,7 @@ ExpectedStmt ASTNodeImporter::VisitSwitchStmt(SwitchStmt *S) {
   return ToStmt;
 }
 
-ExpectedStmt ASTNodeImporter::VisitInspectStmt(InspectStmt *S) {
+ExpectedStmt ASTNodeImporter::VisitInspectExpr(InspectExpr *S) {
   Error Err = Error::success();
   auto ToInit = importChecked(Err, S->getInit());
   auto ToConditionVariable = importChecked(Err, S->getConditionVariable());
@@ -6048,7 +6048,7 @@ ExpectedStmt ASTNodeImporter::VisitInspectStmt(InspectStmt *S) {
     return std::move(Err);
 
   auto *ToStmt =
-      InspectStmt::Create(Importer.getToContext(), ToInit, ToConditionVariable,
+      InspectExpr::Create(Importer.getToContext(), ToInit, ToConditionVariable,
                           ToCond, ToIsConstexpr, ToHasExplicitResultType);
   ToStmt->setInspectLoc(ToInspectLoc);
 

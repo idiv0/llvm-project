@@ -1355,7 +1355,7 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
   case Expr::TypoExprClass:
   // FIXME: this last 4 can probably throw, just
   // silencing warnings right for now.
-  case Stmt::InspectStmtClass:
+  case Stmt::InspectExprClass:
   case Stmt::ExpressionPatternStmtClass:
   case Stmt::IdentifierPatternStmtClass:
   case Stmt::WildcardPatternStmtClass:

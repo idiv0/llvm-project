@@ -7024,8 +7024,8 @@ TreeTransform<Derived>::TransformSwitchStmt(SwitchStmt *S) {
 }
 
 template <typename Derived>
-StmtResult TreeTransform<Derived>::TransformInspectStmt(InspectStmt *S) {
-  return StmtError();
+ExprResult TreeTransform<Derived>::TransformInspectExpr(InspectExpr *S) {
+  return ExprError();
 }
 
 template <typename Derived>

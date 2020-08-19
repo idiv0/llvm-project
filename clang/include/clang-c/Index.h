@@ -2576,7 +2576,7 @@ enum CXCursorKind {
 
   /** An inspect statement.
    */
-  CXCursor_InspectStmt = 286,
+  CXCursor_InspectExpr = 286,
 
   /** A wildcard pattern statement.
    */

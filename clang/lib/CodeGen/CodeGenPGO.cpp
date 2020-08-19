@@ -123,7 +123,7 @@ public:
     BinaryOperatorEQ,
     BinaryOperatorNE,
 
-    InspectStmtClass,
+    InspectExprClass,
     WildcardPatternStmtClass,
     IdentifierPatternStmtClass,
     ExpressionPatternStmtClass,
@@ -277,8 +277,8 @@ struct MapRegionCounters : public RecursiveASTVisitor<MapRegionCounters> {
       return PGOHash::CaseStmt;
     case Stmt::DefaultStmtClass:
       return PGOHash::DefaultStmt;
-    case Stmt::InspectStmtClass:
-      return PGOHash::InspectStmtClass;
+    case Stmt::InspectExprClass:
+      return PGOHash::InspectExprClass;
     case Stmt::WildcardPatternStmtClass:
       return PGOHash::WildcardPatternStmtClass;
     case Stmt::IdentifierPatternStmtClass:

@@ -2067,7 +2067,7 @@ CheckConstexprFunctionStmt(Sema &SemaRef, const FunctionDecl *Dcl, Stmt *S,
         return false;
     return true;
 
-  case Stmt::InspectStmtClass:
+  case Stmt::InspectExprClass:
   case Stmt::WildcardPatternStmtClass:
   case Stmt::IdentifierPatternStmtClass:
   case Stmt::ExpressionPatternStmtClass:

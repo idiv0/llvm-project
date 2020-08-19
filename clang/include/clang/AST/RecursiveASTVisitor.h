@@ -2245,7 +2245,7 @@ DEF_TRAVERSE_STMT(ObjCAtTryStmt, {})
 DEF_TRAVERSE_STMT(ObjCForCollectionStmt, {})
 DEF_TRAVERSE_STMT(ObjCAutoreleasePoolStmt, {})
 
-DEF_TRAVERSE_STMT(InspectStmt, {})
+DEF_TRAVERSE_STMT(InspectExpr, {})
 DEF_TRAVERSE_STMT(WildcardPatternStmt, {})
 DEF_TRAVERSE_STMT(IdentifierPatternStmt, {})
 DEF_TRAVERSE_STMT(ExpressionPatternStmt, {})

@@ -618,7 +618,7 @@ private:
   CFGBlock *VisitOMPExecutableDirective(OMPExecutableDirective *D,
                                         AddStmtChoice asc);
 
-  CFGBlock *VisitInspectStmt(InspectStmt *Terminator);
+  CFGBlock *VisitInspectExpr(InspectExpr *Terminator);
   CFGBlock *VisitWildcardPatternStmt(WildcardPatternStmt *Terminator);
   CFGBlock *VisitIdentifierPatternStmt(IdentifierPatternStmt *Terminator);
   CFGBlock *VisitExpressionPatternStmt(ExpressionPatternStmt *Terminator);
@@ -2331,8 +2331,8 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc,
     case Stmt::SwitchStmtClass:
       return VisitSwitchStmt(cast<SwitchStmt>(S));
 
-    case Stmt::InspectStmtClass:
-      return VisitInspectStmt(cast<InspectStmt>(S));
+    case Stmt::InspectExprClass:
+      return VisitInspectExpr(cast<InspectExpr>(S));
 
     case Stmt::UnaryOperatorClass:
       return VisitUnaryOperator(cast<UnaryOperator>(S), asc);
@@ -4266,7 +4266,7 @@ CFGBlock *CFGBuilder::VisitDefaultStmt(DefaultStmt *Terminator) {
   return DefaultCaseBlock;
 }
 
-CFGBlock *CFGBuilder::VisitInspectStmt(InspectStmt *Terminator) {
+CFGBlock *CFGBuilder::VisitInspectExpr(InspectExpr *Terminator) {
   return nullptr;
 }
 

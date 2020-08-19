@@ -69,10 +69,6 @@ StmtResult Parser::ParseStatement(SourceLocation *TrailingElseLoc,
 ///         'case' constant-expression ':' statement
 ///         'default' ':' statement
 ///
-///       pattern-matching-statements:
-///         inspect-statement
-///	        pattern guard[opt] ':' statement
-///
 ///       selection-statement:
 ///         if-statement
 ///         switch-statement
@@ -289,8 +285,6 @@ Retry:
     return ParseIfStatement(TrailingElseLoc);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
     return ParseSwitchStatement(TrailingElseLoc);
-  case tok::kw_inspect: // C++2b Pattern Matching: inspect-statement
-    return ParseInspectStatement(Attrs, StmtCtx, TrailingElseLoc);
   case tok::kw_while:               // C99 6.8.5.1: while-statement
     return ParseWhileStatement(TrailingElseLoc);
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
@@ -699,7 +693,7 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributesWithRange &attrs,
 ///         identifier '=>' statement
 ///         constant-expression '=>' statement
 ///
-StmtResult Parser::ParsePatternStatement(InspectStmt *Inspect,
+StmtResult Parser::ParsePatternStatement(InspectExpr *Inspect,
                                          ParsedAttributesWithRange &attrs,
                                          ParsedStmtContext StmtCtx) {
   if (Tok.is(tok::l_square)) {
@@ -782,7 +776,7 @@ StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
 
   ParseScope PatternScope(this, Scope::PatternScope);
 
-  // FIXME: retrieve constexpr information from InspectStmt
+  // FIXME: retrieve constexpr information from InspectExpr
   if (Tok.is(tok::kw_if))
     if (!ParsePatternGuard(Cond, IfLoc, false /*IsConstexprIf*/))
       return StmtError();
@@ -835,7 +829,7 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
 
   ParseScope PatternScope(this, Scope::PatternScope | Scope::DeclScope, true);
 
-  // FIXME: retrieve constexpr information from InspectStmt
+  // FIXME: retrieve constexpr information from InspectExpr
   if (Tok.is(tok::kw_if))
     if (!ParsePatternGuard(Cond, IfLoc, false /*IsConstexprIf*/))
       return StmtError();
@@ -869,7 +863,7 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
   return IPS;
 }
 
-StmtResult Parser::ParseExpressionPattern(InspectStmt *Inspect,
+StmtResult Parser::ParseExpressionPattern(InspectExpr *Inspect,
                                           ParsedStmtContext StmtCtx,
                                           Expr *ConstantExpr) {
 
@@ -905,31 +899,31 @@ StmtResult Parser::ParseExpressionPattern(InspectStmt *Inspect,
                                         PatternGuard.get());
 }
 
-StmtResult Parser::ParseStructuredBindingPattern(InspectStmt *Inspect,
+StmtResult Parser::ParseStructuredBindingPattern(InspectExpr *Inspect,
                                                  ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::l_square)) && "Not a structured binding pattern!");
   return StmtError();
 }
 
-StmtResult Parser::ParseTypedPattern(InspectStmt *Inspect,
+StmtResult Parser::ParseTypedPattern(InspectExpr *Inspect,
                                      ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::less)) && "Not a typed pattern!");
   return StmtError();
 }
 
-StmtResult Parser::ParseParenthesisedPattern(InspectStmt *Inspect,
+StmtResult Parser::ParseParenthesisedPattern(InspectExpr *Inspect,
                                              ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::l_paren)) && "Not a parenthsised pattern!");
   return StmtError();
 }
 
-StmtResult Parser::ParseCasePattern(InspectStmt *Inspect,
+StmtResult Parser::ParseCasePattern(InspectExpr *Inspect,
                                     ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::kw_case)) && "Not a case pattern!");
   return StmtError();
 }
 
-StmtResult Parser::ParseBindingPattern(InspectStmt *Inspect,
+StmtResult Parser::ParseBindingPattern(InspectExpr *Inspect,
                                        ParsedStmtContext StmtCtx) {
   assert((Tok.is(tok::kw_let)) && "Not a binding pattern!");
   return StmtError();
@@ -1806,80 +1800,6 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
   SwitchScope.Exit();
 
   return Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.get(), Body.get());
-}
-
-/// ParseInspectStatement
-///       inspect-statement:
-/// [C++]   'inspect' ['constexpr'] '(' condition ')' statement
-StmtResult Parser::ParseInspectStatement(ParsedAttributesWithRange &attrs,
-                                         ParsedStmtContext StmtCtx,
-                                         SourceLocation *TrailingElseLoc) {
-  assert(Tok.is(tok::kw_inspect) && "Not an inspect stmt!");
-  SourceLocation InspectLoc = ConsumeToken(); // eat the 'inspect'.
-
-  // Check for constexpr
-  bool IsConstexpr = false;
-  if (Tok.is(tok::kw_constexpr)) {
-    IsConstexpr = true;
-    ConsumeToken();
-  }
-
-  // inspect (...) { }
-  //         ^
-  if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after)
-        << (IsConstexpr ? "constexpr" : "inspect");
-    SkipUntil(tok::semi);
-    return StmtError();
-  }
-
-  ParseScope InspectScope(this, Scope::InspectScope);
-
-  // Parse the condition.
-  StmtResult Init;
-  Sema::ConditionResult Cond;
-  if (ParseParenExprOrCondition(&Init, Cond, InspectLoc,
-                                Sema::ConditionKind::Inspect))
-    return StmtError();
-
-  // Parse trailing-return-type[opt].
-  TypeResult TrailingReturnType(true);
-  if (Tok.is(tok::arrow)) {
-    SourceRange Range;
-    TrailingReturnType =
-        ParseTrailingReturnType(Range, /*MayBeFollowedByDirectInit*/ false);
-  }
-
-  // TODO: We'll want to pass the return type through to the
-  // underlying expression, *when* inspect() is actually InspectExpr
-  const bool ExplicitReturnType = !TrailingReturnType.isInvalid();
-  StmtResult Inspect = Actions.ActOnStartOfInspectStmt(
-      InspectLoc, Init.get(), Cond, IsConstexpr, ExplicitReturnType);
-  if (Inspect.isInvalid()) {
-    // Skip the inspect body.
-    if (Tok.is(tok::l_brace)) {
-      ConsumeBrace();
-      SkipUntil(tok::r_brace);
-    } else
-      SkipUntil(tok::semi);
-    return Inspect;
-  }
-
-  // See comments in ParseIfStatement for why we create a scope for the
-  // condition and a new scope for substatement in C++.
-  ParseScope InnerScope(this, Scope::DeclScope, true, Tok.is(tok::l_brace));
-
-  // Read the body statement.
-  //
-  // inspect (...) { ... }
-  //               ^
-  StmtResult Body(ParseStatement(TrailingElseLoc));
-
-  // Pop the scopes.
-  InnerScope.Exit();
-  InspectScope.Exit();
-
-  return Actions.ActOnFinishInspectStmt(InspectLoc, Inspect.get(), Body.get());
 }
 
 /// ParseWhileStatement

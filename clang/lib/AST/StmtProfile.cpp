@@ -270,8 +270,8 @@ void StmtProfiler::VisitSwitchStmt(const SwitchStmt *S) {
   VisitDecl(S->getConditionVariable());
 }
 
-void StmtProfiler::VisitInspectStmt(const InspectStmt *S) {
-  VisitStmt(S);
+void StmtProfiler::VisitInspectExpr(const InspectExpr *S) {
+  VisitExpr(S);
   VisitDecl(S->getConditionVariable());
 }
 

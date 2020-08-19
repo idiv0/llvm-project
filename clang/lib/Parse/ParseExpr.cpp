@@ -795,6 +795,7 @@ class CastExpressionIdValidator final : public CorrectionCandidateCallback {
 /// [G++]   binary-type-trait '(' type-id ',' type-id ')'           [TODO]
 /// [EMBT]  array-type-trait '(' type-id ',' integer ')'
 /// [clang] '^' block-literal
+/// [C++2b]   'inspect-expression'
 ///
 ///       constant: [C99 6.4.4]
 ///         integer-constant
@@ -1687,6 +1688,8 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
       break;
     }
     LLVM_FALLTHROUGH;
+  case tok::kw_inspect: // C++2b Pattern Matching: inspect-statement
+    return ParseInspectExpr();
   default:
     NotCastExpr = true;
     return ExprError();

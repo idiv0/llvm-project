@@ -1505,8 +1505,8 @@ namespace serialization {
       /// A MS-style AsmStmt record.
       STMT_MSASM,
 
-      /// Am InspectStmt record.
-      STMT_INSPECT,
+      /// An InspectExpr record.
+      EXPR_INSPECT,
 
       /// A WildcardPatternStmt record.
       STMT_WILDCARDPATTERN,
