@@ -4396,6 +4396,8 @@ recurse:
     Out << "v18co_yield";
     mangleExpression(cast<CoawaitExpr>(E)->getOperand());
     break;
+  case Expr::InspectExprClass:
+    assert(0 && "not implemented");
   }
 }
 
