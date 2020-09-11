@@ -1689,7 +1689,8 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
     }
     LLVM_FALLTHROUGH;
   case tok::kw_inspect: // C++2b Pattern Matching: inspect-statement
-    return ParseInspectExpr();
+    Res = ParseInspectExpr();
+    break;
   default:
     NotCastExpr = true;
     return ExprError();

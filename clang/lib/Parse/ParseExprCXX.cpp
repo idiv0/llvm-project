@@ -3932,7 +3932,7 @@ ExprResult Parser::ParseBuiltinBitCast() {
 ///       inspect-expression:
 /// [C++]   'inspect' ['constexpr'] '(' condition ')' statement
 ExprResult Parser::ParseInspectExpr() {
-  assert(Tok.is(tok::kw_inspect) && "Not an inspect stmt!");
+  assert(Tok.is(tok::kw_inspect) && "Not an inspect expression!");
   SourceLocation InspectLoc = ConsumeToken(); // eat the 'inspect'.
 
   // Check for constexpr
@@ -3966,13 +3966,12 @@ ExprResult Parser::ParseInspectExpr() {
     SourceRange Range;
     TrailingReturnType =
         ParseTrailingReturnType(Range, /*MayBeFollowedByDirectInit*/ false);
+    if (TrailingReturnType.isInvalid()) // FIXME: add error message
+      return ExprError();
   }
 
-  // TODO: We'll want to pass the return type through to the
-  // underlying expression, *when* inspect() is actually InspectExpr
-  const bool ExplicitReturnType = !TrailingReturnType.isInvalid();
   ExprResult Inspect = Actions.ActOnStartOfInspectExpr(
-      InspectLoc, Init.get(), Cond, IsConstexpr, ExplicitReturnType);
+      InspectLoc, Init.get(), Cond, IsConstexpr, TrailingReturnType);
   if (Inspect.isInvalid()) {
     // Skip the inspect body.
     if (Tok.is(tok::l_brace)) {
@@ -3996,6 +3995,9 @@ ExprResult Parser::ParseInspectExpr() {
   // Pop the scopes.
   InnerScope.Exit();
   InspectScope.Exit();
+
+  if (Body.isInvalid())
+    return ExprError();
 
   return Actions.ActOnFinishInspectExpr(InspectLoc, Inspect.get(), Body.get());
 }

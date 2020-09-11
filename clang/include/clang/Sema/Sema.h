@@ -5088,7 +5088,7 @@ public:
 
   ExprResult ActOnStartOfInspectExpr(SourceLocation InspectLoc, Stmt *InitStmt,
                                      ConditionResult Cond, bool IsConstexpr,
-                                     bool ExplicitReturnType);
+                                     TypeResult ReturnType);
   ExprResult ActOnFinishInspectExpr(SourceLocation InspectLoc, Expr *Inspect,
                                     Stmt *Body);
 
