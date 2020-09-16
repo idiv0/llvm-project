@@ -3018,6 +3018,7 @@ public:
   void EmitCaseStmt(const CaseStmt &S);
   void EmitCaseStmtRange(const CaseStmt &S);
 
+  void EmitPatternStmtBody(const PatternStmt &S);
   void EmitWildcardPatternStmt(const WildcardPatternStmt &S);
   void EmitIdentifierPatternStmt(const IdentifierPatternStmt &S);
   void EmitExpressionPatternStmt(const ExpressionPatternStmt &S);
