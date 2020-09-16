@@ -791,11 +791,10 @@ StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
 
   // Parse the statement
   //
-  // '__' pattern-guard[opt] '=>' statement
+  // '__' pattern-guard[opt] '=>' expression
+  //                              { ... } (implies void)
   //                              ^
   StmtResult SubStmt = ParseStatement(nullptr, StmtCtx);
-  // FIXME: look at '{' and parse as returning void.
-  //StmtResult SubStmt = ParseExprStatement(StmtCtx);
 
   // Broken substmt shouldn't prevent the identifier from being added to the
   // AST.
@@ -849,8 +848,9 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
 
   // Parse the statement
   //
-  //   identifier pattern-guard[opt] '=>' statement
-  //                                     ^
+  // '__' pattern-guard[opt] '=>' expression
+  //                              { ... } (implies void)
+  //                              ^
   StmtResult SubStmt = ParseStatement(nullptr, StmtCtx);
 
   // Broken substmt shouldn't prevent the identifier from being added to the
@@ -1274,9 +1274,12 @@ StmtResult Parser::handleExprStmt(ExprResult E, ParsedStmtContext StmtCtx) {
   }
 
   // FIXME: Maybe have pattern specific EK instead of reusing EK_StmtExprResult?
-  // FIXME: Make sure pattern with compound statements (void) don't get here?
-  if (getCurScope()->isPatternScope())
-    IsStmtExprResult = true;
+  if (!IsStmtExprResult && getCurScope()->isPatternScope()) {
+    // A inspect pattern body using compound statements does not yield a value.
+    if ((StmtCtx & ParsedStmtContext::InPatternCompoundStmt) ==
+        ParsedStmtContext())
+      IsStmtExprResult = true;
+  }
 
   if (IsStmtExprResult)
     E = Actions.ActOnStmtExprResult(E);
@@ -1354,6 +1357,9 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
     StmtResult R;
     if (Tok.isNot(tok::kw___extension__)) {
+      if (getCurScope()->isPatternScope())
+        SubStmtCtx |= ParsedStmtContext::InPatternCompoundStmt;
+
       R = ParseStatementOrDeclaration(Stmts, SubStmtCtx);
     } else {
       // __extension__ can start declarations and it can also be a unary
