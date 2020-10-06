@@ -2020,7 +2020,8 @@ private:
                          bool IsConstexprIf);
   StmtResult ParseWildcardPattern(ParsedStmtContext StmtCtx);
   StmtResult ParseIdentifierPattern(ParsedStmtContext StmtCtx);
-  StmtResult ParseExpressionPattern(ParsedStmtContext StmtCtx);
+  StmtResult ParseExpressionPattern(ParsedStmtContext StmtCtx,
+                                    bool HasCase = false);
 
   StmtResult ParseCaseStatement(ParsedStmtContext StmtCtx,
                                 bool MissingCase = false,

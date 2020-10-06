@@ -987,6 +987,11 @@ protected:
     /// pattern statement has a pattern guard
     unsigned PatternStmtHasPatternGuard : 1;
 
+    /// Defaults to false, only applies to patterns
+    /// that could use the keyword case (expression
+    /// patterns)
+    unsigned HasCase : 1;
+
     /// The location of the '__' wildcard, identifier or
     /// constant expression.
     SourceLocation PatternLoc;
@@ -3643,6 +3648,7 @@ protected:
   PatternStmt(StmtClass SC, SourceLocation KWLoc, SourceLocation ColonLoc)
       : Stmt(SC), ColonLoc(ColonLoc) {
     setPatternLoc(KWLoc);
+    setHasCase(false);
   }
 
   PatternStmt(StmtClass SC, EmptyShell) : Stmt(SC) {}
@@ -3669,6 +3675,9 @@ public:
 
   inline void setPatternGuard(Expr *PatternGuard);
   inline bool hasPatternGuard() const;
+
+  inline void setHasCase(bool HasCase) { InspectPatternBits.HasCase = HasCase; }
+  inline bool hasCase() const { return InspectPatternBits.HasCase; }
 
   SourceLocation getBeginLoc() const { return getPatternLoc(); }
   inline SourceLocation getEndLoc() const LLVM_READONLY;

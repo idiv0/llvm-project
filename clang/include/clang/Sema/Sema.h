@@ -4206,7 +4206,8 @@ public:
                                     Stmt *SubStmt, Expr *PatternGuard);
   StmtResult ActOnExpressionPattern(SourceLocation CstExprLoc,
                                     SourceLocation ColonLoc, Expr *CstExpr,
-                                    Stmt *SubStmt, Expr *PatternGuard);
+                                    Stmt *SubStmt, Expr *PatternGuard,
+                                    bool HasCase);
   class ConditionResult;
   StmtResult ActOnIfStmt(SourceLocation IfLoc, bool IsConstexpr,
                          Stmt *InitStmt,
