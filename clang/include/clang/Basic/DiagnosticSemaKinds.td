@@ -82,8 +82,8 @@ def err_typecheck_converted_constant_expression_indirect : Error<
   "bind reference to a temporary">;
 def err_expr_not_cce : Error<
   "%select{case value|enumerator value|non-type template argument|"
-  "array size|constexpr if condition|explicit specifier argument}0 "
-  "is not a constant expression">;
+  "array size|constexpr if condition|explicit specifier argument|"
+  "pattern}0 is not a constant expression">;
 def ext_cce_narrowing : ExtWarn<
   "%select{case value|enumerator value|non-type template argument|"
   "array size|constexpr if condition|explicit specifier argument}0 "

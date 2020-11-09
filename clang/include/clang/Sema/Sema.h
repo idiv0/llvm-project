@@ -3037,12 +3037,13 @@ public:
 
   /// Contexts in which a converted constant expression is required.
   enum CCEKind {
-    CCEK_CaseValue,   ///< Expression in a case label.
-    CCEK_Enumerator,  ///< Enumerator value with fixed underlying type.
-    CCEK_TemplateArg, ///< Value of a non-type template parameter.
-    CCEK_NewExpr,     ///< Constant expression in a noptr-new-declarator.
-    CCEK_ConstexprIf, ///< Condition in a constexpr if statement.
-    CCEK_ExplicitBool ///< Condition in an explicit(bool) specifier.
+    CCEK_CaseValue,    ///< Expression in a case label.
+    CCEK_Enumerator,   ///< Enumerator value with fixed underlying type.
+    CCEK_TemplateArg,  ///< Value of a non-type template parameter.
+    CCEK_NewExpr,      ///< Constant expression in a noptr-new-declarator.
+    CCEK_ConstexprIf,  ///< Condition in a constexpr if statement.
+    CCEK_ExplicitBool, ///< Condition in an explicit(bool) specifier.
+    CCEK_PatternExpr   ///< Inspect's pattern matching expression.
   };
   ExprResult CheckConvertedConstantExpression(Expr *From, QualType T,
                                               llvm::APSInt &Value, CCEKind CCE);
@@ -4208,6 +4209,8 @@ public:
                                     SourceLocation ColonLoc, Expr *CstExpr,
                                     Stmt *SubStmt, Expr *PatternGuard,
                                     bool HasCase);
+  ExprResult CheckPatternConstantExpr(Expr *MatchExpr,
+                                      SourceLocation MatchExprLoc);
   class ConditionResult;
   StmtResult ActOnIfStmt(SourceLocation IfLoc, bool IsConstexpr,
                          Stmt *InitStmt,
