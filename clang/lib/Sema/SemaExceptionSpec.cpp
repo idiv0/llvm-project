@@ -1277,6 +1277,7 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
   case Expr::StmtExprClass:
   case Expr::ConvertVectorExprClass:
   case Expr::VAArgExprClass:
+  case Stmt::InspectExprClass:
     return canSubStmtsThrow(*this, S);
 
   case Expr::CompoundLiteralExprClass:
@@ -1353,13 +1354,6 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
   case Expr::UnresolvedLookupExprClass:
   case Expr::UnresolvedMemberExprClass:
   case Expr::TypoExprClass:
-  // FIXME: this last 4 can probably throw, just
-  // silencing warnings right for now.
-  case Stmt::InspectExprClass:
-  case Stmt::ExpressionPatternStmtClass:
-  case Stmt::IdentifierPatternStmtClass:
-  case Stmt::WildcardPatternStmtClass:
-    // FIXME: Many of the above can throw.
     return CT_Cannot;
 
   case Expr::AddrLabelExprClass:
@@ -1485,6 +1479,9 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
   case Stmt::SEHTryStmtClass:
   case Stmt::SwitchStmtClass:
   case Stmt::WhileStmtClass:
+  case Stmt::ExpressionPatternStmtClass:
+  case Stmt::IdentifierPatternStmtClass:
+  case Stmt::WildcardPatternStmtClass:
     return canSubStmtsThrow(*this, S);
 
   case Stmt::DeclStmtClass: {
