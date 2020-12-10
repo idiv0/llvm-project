@@ -1773,9 +1773,9 @@ enum class DeclaratorContext {
     TemplateTypeArgContext, // Template type argument (in default argument).
     AliasDeclContext,    // C++11 alias-declaration.
     AliasTemplateContext, // C++11 alias-declaration template.
-    RequiresExprContext   // C++2a requires-expression.
+    RequiresExprContext,  // C++2a requires-expression.
+    PatternContext,       // C++2b inspect structural bindings pattern.
 };
-
 
 /// Information about one declarator, including the parsed type
 /// information and the identifier.
@@ -1985,6 +1985,7 @@ public:
     case DeclaratorContext::ForContext:
     case DeclaratorContext::InitStmtContext:
     case DeclaratorContext::ConditionContext:
+    case DeclaratorContext::PatternContext:
       return false;
 
     case DeclaratorContext::TypeNameContext:
@@ -2030,6 +2031,7 @@ public:
     case DeclaratorContext::CXXCatchContext:
     case DeclaratorContext::ObjCCatchContext:
     case DeclaratorContext::RequiresExprContext:
+    case DeclaratorContext::PatternContext:
       return true;
 
     case DeclaratorContext::TypeNameContext:
@@ -2061,6 +2063,7 @@ public:
     case DeclaratorContext::ForContext:
     case DeclaratorContext::InitStmtContext:
     case DeclaratorContext::ConditionContext:
+    case DeclaratorContext::PatternContext:
       return true;
 
     case DeclaratorContext::MemberContext:
@@ -2116,6 +2119,7 @@ public:
     case DeclaratorContext::ForContext:
     case DeclaratorContext::InitStmtContext:
     case DeclaratorContext::TrailingReturnVarContext:
+    case DeclaratorContext::PatternContext:
       return true;
 
     case DeclaratorContext::ConditionContext:
@@ -2367,6 +2371,7 @@ public:
     case DeclaratorContext::TrailingReturnContext:
     case DeclaratorContext::TrailingReturnVarContext:
     case DeclaratorContext::RequiresExprContext:
+    case DeclaratorContext::PatternContext:
       return false;
     }
     llvm_unreachable("unknown context kind!");
@@ -2408,6 +2413,7 @@ public:
     case DeclaratorContext::InitStmtContext:
     case DeclaratorContext::ConditionContext:
     case DeclaratorContext::TemplateArgContext:
+    case DeclaratorContext::PatternContext:
       return true;
     }
 

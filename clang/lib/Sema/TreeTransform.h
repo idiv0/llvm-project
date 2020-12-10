@@ -7046,6 +7046,12 @@ StmtResult TreeTransform<Derived>::TransformExpressionPatternStmt(
   return StmtError();
 }
 
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformStructuredBindingPatternStmt(
+    StructuredBindingPatternStmt *S) {
+  return StmtError();
+}
+
 template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) {

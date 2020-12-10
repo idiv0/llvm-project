@@ -3208,6 +3208,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     case DeclaratorContext::ForContext:
     case DeclaratorContext::InitStmtContext:
     case DeclaratorContext::ConditionContext:
+    case DeclaratorContext::PatternContext:
       // FIXME: P0091R3 (erroneously) does not permit class template argument
       // deduction in conditions, for-init-statements, and other declarations
       // that are not simple-declarations.
@@ -3309,6 +3310,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     case DeclaratorContext::InitStmtContext:
     case DeclaratorContext::BlockLiteralContext:
     case DeclaratorContext::LambdaExprContext:
+    case DeclaratorContext::PatternContext:
       // C++11 [dcl.type]p3:
       //   A type-specifier-seq shall not define a class or enumeration unless
       //   it appears in the type-id of an alias-declaration (7.1.3) that is not
@@ -4390,6 +4392,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     case DeclaratorContext::TypeNameContext:
     case DeclaratorContext::FunctionalCastContext:
     case DeclaratorContext::RequiresExprContext:
+    case DeclaratorContext::PatternContext:
       // Don't infer in these contexts.
       break;
     }
@@ -5407,6 +5410,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     case DeclaratorContext::TrailingReturnVarContext:
     case DeclaratorContext::TemplateArgContext:
     case DeclaratorContext::TemplateTypeArgContext:
+    case DeclaratorContext::PatternContext:
       // FIXME: We may want to allow parameter packs in block-literal contexts
       // in the future.
       S.Diag(D.getEllipsisLoc(),

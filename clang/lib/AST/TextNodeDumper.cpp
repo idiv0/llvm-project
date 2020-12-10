@@ -698,6 +698,9 @@ void TextNodeDumper::VisitExpressionPatternStmt(
     OS << " has_case";
 }
 
+void TextNodeDumper::VisitStructuredBindingPatternStmt(
+    const StructuredBindingPatternStmt *Node) {}
+
 void TextNodeDumper::VisitWhileStmt(const WhileStmt *Node) {
   if (Node->hasVarStorage())
     OS << " has_var";
