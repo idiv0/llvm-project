@@ -4140,7 +4140,7 @@ class StructuredBindingPatternStmt final
 public:
   StructuredBindingPatternStmt(const ASTContext &Ctx, SourceLocation PatternLoc,
                                SourceLocation ColonLoc, SourceLocation LLoc,
-                               SourceLocation RLoc, DecompositionDecl *DecompCond,
+                               SourceLocation RLoc, Stmt *DecompCond,
                                Stmt *SubStmt, Expr *Guard, Expr *PatCond,
                                ArrayRef<Stmt *> VarDecls,
                                bool ExcludedFromTypeDeduction);
@@ -4157,7 +4157,7 @@ public:
   static StructuredBindingPatternStmt *
   Create(const ASTContext &Ctx, SourceLocation PatternLoc,
          SourceLocation ColonLoc, SourceLocation LLoc, SourceLocation RLoc,
-         DecompositionDecl *DecompCond, Stmt *SubStmt, Expr *Guard, Expr *PatCond,
+         Stmt *DecompCond, Stmt *SubStmt, Expr *Guard, Expr *PatCond,
          ArrayRef<Stmt *> VarDecls, bool ExcludedFromTypeDeduction);
 
   /// Build an empty expression pattern statement.
@@ -4189,9 +4189,9 @@ public:
   }
 
   /// DecompositionDecl
-  DecompositionDecl *getDecompDecl();
-  const DecompositionDecl *getDecompDecl() const;
-  void setDecompDecl(const ASTContext &Ctx, DecompositionDecl *S);
+  Stmt *getDecompStmt();
+  const Stmt *getDecompStmt() const;
+  void setDecompStmt(const ASTContext &Ctx, Stmt *S);
 
   /// Pattern guards
   Expr *getPatternGuard() {
