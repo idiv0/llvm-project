@@ -1853,6 +1853,9 @@ void CodeGenFunction::EmitIdentifierPatternStmt(
   // Emit code for the current pattern test.
   EmitBlock(ThisPattern);
 
+  // Emit variable introduced by identifier pattern.
+  EmitStmt(S.getVar());
+
   // Do the proper handling in the presence of a pattern guard.
   if (S.hasPatternGuard()) {
     // Do not bother creating a specific BB for the pattern body if
@@ -1862,10 +1865,6 @@ void CodeGenFunction::EmitIdentifierPatternStmt(
                          getProfileCount(S.getSubStmt()));
     EmitBlock(PatBodyBB);
   }
-
-  // Emit code for the statement following the pattern and branch to the
-  // next block after inspect.
-  EmitStmt(S.getVar());
 
   // Emit the pattern body
   EmitPatternStmtBody(S);

@@ -1018,6 +1018,17 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
 
   ParseScope PatternScope(this, Scope::PatternScope | Scope::DeclScope, true);
 
+  // Create binding variable now and allow for it to be visible during pattern
+  // guard parsing.
+  auto *FSI = Actions.getCurFunction();
+  if (FSI->InspectStack.empty())
+    return StmtError();
+  InspectExpr *Inspect = FSI->InspectStack.back().getPointer();
+  StmtResult NewIdVar =
+      Actions.CreatePatternIdBindingVar(Inspect->getCond(), II, IdentifierLoc);
+  if (NewIdVar.isInvalid())
+    return StmtError();
+
   // FIXME: retrieve constexpr information from InspectExpr
   if (Tok.is(tok::kw_if))
     if (!ParsePatternGuard(Cond, IfLoc, false /*IsConstexprIf*/))
@@ -1046,9 +1057,9 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
     }
   }
 
-  auto IPS =
-      Actions.ActOnIdentifierPattern(IdentifierLoc, ArrowLoc, II, nullptr,
-                                     Cond.get().second, ExclaimLoc.isValid());
+  auto IPS = Actions.ActOnIdentifierPattern(
+      IdentifierLoc, ArrowLoc, NewIdVar.get(), nullptr, Cond.get().second,
+      ExclaimLoc.isValid());
 
   // Parse the statement
   //
