@@ -4248,7 +4248,10 @@ public:
   StmtResult ActOnStructuredBindingPattern(
       SourceLocation ColonLoc, SourceLocation LLoc, SourceLocation RLoc,
       SmallVectorImpl<Sema::ParsedPatEltResult> &PatList, Stmt *SubStmt,
-      Expr *Guard, bool ExcludedFromTypeDeduction);
+      Expr *Guard, Stmt *DecompStmt, bool ExcludedFromTypeDeduction);
+  StmtResult
+  ActOnPatternList(SmallVectorImpl<Sema::ParsedPatEltResult> &PatList,
+                   SourceLocation LLoc);
 
   ExprResult CheckPatternConstantExpr(Expr *MatchExpr,
                                       SourceLocation MatchExprLoc);
