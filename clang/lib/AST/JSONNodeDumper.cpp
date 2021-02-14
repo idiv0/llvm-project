@@ -1459,6 +1459,11 @@ void JSONNodeDumper::VisitStructuredBindingPatternStmt(
   assert(0 && "not implemented");
 }
 
+void JSONNodeDumper::VisitAlternativePatternStmt(
+    const AlternativePatternStmt *SS) {
+  assert(0 && "not implemented");
+}
+
 void JSONNodeDumper::VisitLabelStmt(const LabelStmt *LS) {
   JOS.attribute("name", LS->getName());
   JOS.attribute("declId", createPointerRepresentation(LS->getDecl()));

@@ -1483,6 +1483,7 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
   case Stmt::IdentifierPatternStmtClass:
   case Stmt::WildcardPatternStmtClass:
   case Stmt::StructuredBindingPatternStmtClass:
+  case Stmt::AlternativePatternStmtClass:
     return canSubStmtsThrow(*this, S);
 
   case Stmt::DeclStmtClass: {

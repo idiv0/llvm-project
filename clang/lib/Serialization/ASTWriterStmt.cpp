@@ -243,6 +243,10 @@ void ASTStmtWriter::VisitStructuredBindingPatternStmt(
   assert(0 && "not implemented");
 }
 
+void ASTStmtWriter::VisitAlternativePatternStmt(AlternativePatternStmt *S) {
+  assert(0 && "not implemented");
+}
+
 void ASTStmtWriter::VisitWhileStmt(WhileStmt *S) {
   VisitStmt(S);
 
