@@ -577,6 +577,7 @@ StmtResult Sema::ActOnWildcardPattern(SourceLocation WildcardLoc,
 
   auto *WPS = WildcardPatternStmt::Create(
       Context, WildcardLoc, ColonLoc, PatternGuard, ExcludedFromTypeDeduction);
+  WPS->setPatternGuard(PatternGuard);
   WPS->setSubStmt(SubStmt);
   getCurFunction()->InspectStack.back().getPointer()->addPattern(WPS);
   return WPS;
@@ -593,6 +594,7 @@ StmtResult Sema::ActOnIdentifierPattern(SourceLocation IdentifierLoc,
   auto *IPS =
       IdentifierPatternStmt::Create(Context, IdentifierLoc, ColonLoc,
                                     PatternGuard, ExcludedFromTypeDeduction);
+  IPS->setPatternGuard(PatternGuard);
   IPS->setVar(NewIdVar);
   IPS->setSubStmt(SubStmt);
   Inspect->addPattern(IPS);
@@ -674,6 +676,7 @@ StmtResult Sema::ActOnExpressionPattern(SourceLocation MatchExprLoc,
 
   auto *EPS = ExpressionPatternStmt::Create(
       Context, MatchExprLoc, ColonLoc, PatternGuard, ExcludedFromTypeDeduction);
+  EPS->setPatternGuard(PatternGuard);
   EPS->setMatchCond(MatchCond.get());
   EPS->setSubStmt(SubStmt);
   EPS->setHasCase(HasCase);
@@ -831,7 +834,8 @@ StmtResult Sema::ActOnStructuredBindingPattern(
   auto *SBP = StructuredBindingPatternStmt::Create(
       Context, LLoc, ColonLoc, LLoc, RLoc, DecompStmt, SubStmt, Guard, PatCond,
       ExcludedFromTypeDeduction);
-
+  SBP->setPatternGuard(Guard);
+  SBP->setPatCond(PatCond);
   Inspect->addPattern(SBP);
   return SBP;
 }

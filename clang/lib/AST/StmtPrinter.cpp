@@ -301,8 +301,8 @@ void StmtPrinter::VisitInspectExpr(InspectExpr *Node) {
 }
 
 void StmtPrinter::VisitWildcardPatternStmt(WildcardPatternStmt *Node) {
-  Indent() << "__ =>" << NL;
-  if (Node->getPatternGuard()) {
+  Indent() << "__ => ";
+  if (Node->hasPatternGuard()) {
     PrintExpr(Node->getPatternGuard());
   }
   PrintStmt(Node->getSubStmt(), 0);
@@ -311,20 +311,20 @@ void StmtPrinter::VisitWildcardPatternStmt(WildcardPatternStmt *Node) {
 void StmtPrinter::VisitIdentifierPatternStmt(IdentifierPatternStmt *Node) {
   Indent();
   // FIXME: find a way to print Node->getVar()
-  if (Node->getPatternGuard()) {
+  if (Node->hasPatternGuard()) {
     PrintExpr(Node->getPatternGuard());
   }
-  OS << " =>" << NL;
+  OS << " => ";
   PrintStmt(Node->getSubStmt(), 0);
 }
 
 void StmtPrinter::VisitExpressionPatternStmt(ExpressionPatternStmt *Node) {
   Indent();
   PrintExpr(cast<Expr>(Node->getMatchCond()));
-  if (Node->getPatternGuard()) {
+  if (Node->hasPatternGuard()) {
     PrintExpr(Node->getPatternGuard());
   }
-  OS << " =>" << NL;
+  OS << " => ";
   PrintStmt(Node->getSubStmt(), 0);
 }
 
@@ -332,10 +332,10 @@ void StmtPrinter::VisitStructuredBindingPatternStmt(
     StructuredBindingPatternStmt *Node) {
   Indent();
   OS << "[...] "; // FIXME: print pattern list?
-  if (Node->getPatternGuard()) {
+  if (Node->hasPatternGuard()) {
     PrintExpr(Node->getPatternGuard());
   }
-  OS << " =>" << NL;
+  OS << " => ";
   PrintStmt(Node->getSubStmt(), 0);
 }
 

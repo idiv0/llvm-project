@@ -3740,11 +3740,7 @@ public:
       : PatternStmt(WildcardPatternStmtClass, PatternLoc, ColonLoc,
                     ExcludedFromTypeDeduction) {
     setSubStmt(SubStmt);
-    InspectPatternBits.PatternStmtHasPatternGuard = false;
-    if (Guard) {
-      InspectPatternBits.PatternStmtHasPatternGuard = true;
-      setPatternGuard(Guard);
-    }
+    setPatternGuard(Guard);
   }
 
   /// Build an empty wildcard pattern statement.
@@ -3791,6 +3787,7 @@ public:
   void setPatternGuard(Expr *Guard) {
     getTrailingObjects<Stmt *>()[patternGuardOffset()] =
         reinterpret_cast<Stmt *>(Guard);
+    InspectPatternBits.PatternStmtHasPatternGuard = Guard ? true : false;
   }
 
   bool hasPatternGuard() const {
@@ -3848,9 +3845,7 @@ class IdentifierPatternStmt final
 
   unsigned varOffset() const { return VarOffset; }
   unsigned subStmtOffset() const { return SubStmtOffset; }
-  unsigned patternGuardOffset() const {
-    return varOffset() + hasPatternGuard();
-  }
+  unsigned patternGuardOffset() const { return NumMandatoryStmtPtr; }
 
   unsigned numTrailingObjects(OverloadToken<Stmt *>) const {
     return NumMandatoryStmtPtr + hasPatternGuard();
@@ -3864,11 +3859,7 @@ public:
                     ExcludedFromTypeDeduction) {
     setSubStmt(SubStmt);
     setVar(VD);
-    InspectPatternBits.PatternStmtHasPatternGuard = false;
-    if (Guard) {
-      InspectPatternBits.PatternStmtHasPatternGuard = true;
-      setPatternGuard(Guard);
-    }
+    setPatternGuard(Guard);
   }
 
   /// Build an empty identifier pattern statement.
@@ -3925,6 +3916,7 @@ public:
   void setPatternGuard(Expr *Guard) {
     getTrailingObjects<Stmt *>()[patternGuardOffset()] =
         reinterpret_cast<Stmt *>(Guard);
+    InspectPatternBits.PatternStmtHasPatternGuard = Guard ? true : false;
   }
 
   bool hasPatternGuard() const {
@@ -3981,9 +3973,7 @@ class ExpressionPatternStmt final
 
   unsigned matchCondOffset() const { return MatchCondOffset; }
   unsigned subStmtOffset() const { return SubStmtOffset; }
-  unsigned patternGuardOffset() const {
-    return matchCondOffset() + hasPatternGuard();
-  }
+  unsigned patternGuardOffset() const { return NumMandatoryStmtPtr; }
 
   unsigned numTrailingObjects(OverloadToken<Stmt *>) const {
     return NumMandatoryStmtPtr + hasPatternGuard();
@@ -3997,11 +3987,7 @@ public:
                     ExcludedFromTypeDeduction) {
     setSubStmt(SubStmt);
     setMatchCond(MatchCond);
-    InspectPatternBits.PatternStmtHasPatternGuard = false;
-    if (Guard) {
-      InspectPatternBits.PatternStmtHasPatternGuard = true;
-      setPatternGuard(Guard);
-    }
+    setPatternGuard(Guard);
   }
 
   /// Build an empty expression pattern statement.
@@ -4058,6 +4044,7 @@ public:
   void setPatternGuard(Expr *Guard) {
     getTrailingObjects<Stmt *>()[patternGuardOffset()] =
         reinterpret_cast<Stmt *>(Guard);
+    InspectPatternBits.PatternStmtHasPatternGuard = Guard ? true : false;
   }
 
   bool hasPatternGuard() const {
@@ -4139,7 +4126,7 @@ public:
   explicit StructuredBindingPatternStmt(EmptyShell Empty, bool HasPatternGuard)
       : PatternStmt(StructuredBindingPatternStmtClass, Empty) {
     InspectPatternBits.PatternStmtHasPatternGuard = HasPatternGuard;
-    InspectPatternBits.HasPatCond = 0;
+    InspectPatternBits.HasPatCond = false;
   }
 
   /// Build a expression pattern statement.
@@ -4198,6 +4185,7 @@ public:
   void setPatternGuard(Expr *Guard) {
     getTrailingObjects<Stmt *>()[patternGuardOffset()] =
         reinterpret_cast<Stmt *>(Guard);
+    InspectPatternBits.PatternStmtHasPatternGuard = Guard ? true : false;
   }
 
   bool hasPatternGuard() const {
@@ -4220,6 +4208,7 @@ public:
   void setPatCond(Expr *Cond) {
     getTrailingObjects<Stmt *>()[patCondOffset()] =
         reinterpret_cast<Stmt *>(Cond);
+    InspectPatternBits.HasPatCond = Cond ? true : false;
   }
 
   bool hasPatCond() const { return InspectPatternBits.HasPatCond; }
