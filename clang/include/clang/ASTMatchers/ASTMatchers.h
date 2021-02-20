@@ -2214,6 +2214,18 @@ extern const internal::VariadicDynCastAllOfMatcher<Stmt, IdentifierPatternStmt>
 extern const internal::VariadicDynCastAllOfMatcher<Stmt, ExpressionPatternStmt>
     expressionPatternStmt;
 
+/// Matches structured binding pattern statements inside inspect expressions.
+///
+/// Given
+/// \code
+///   inspect(a) { b => x(); [i, j] => y(); __ => z() }
+/// \endcode
+/// StructuredBindingPatternStmt()
+///   matches '[i, j] =>'.
+extern const internal::VariadicDynCastAllOfMatcher<Stmt,
+                                                   StructuredBindingPatternStmt>
+    structuredBindingPatternStmt;
+
 /// Matches compound statements.
 ///
 /// Example matches '{}' and '{{}}' in 'for (;;) {{}}'

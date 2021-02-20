@@ -1517,6 +1517,9 @@ namespace serialization {
       /// An ExpressionPatternStmt record.
       STMT_EXPRESSIONPATTERN,
 
+      /// A StructuredBindingPatternStmt record.
+      STMT_STRUCTUREDBINDINGPATTERN,
+
       /// A constant expression context.
       EXPR_CONSTANT,
 
