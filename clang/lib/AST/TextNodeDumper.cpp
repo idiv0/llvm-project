@@ -699,7 +699,10 @@ void TextNodeDumper::VisitExpressionPatternStmt(
 }
 
 void TextNodeDumper::VisitStructuredBindingPatternStmt(
-    const StructuredBindingPatternStmt *Node) {}
+    const StructuredBindingPatternStmt *Node) {
+  if (Node->hasPatternGuard())
+    OS << " has_guard";
+}
 
 void TextNodeDumper::VisitWhileStmt(const WhileStmt *Node) {
   if (Node->hasVarStorage())
