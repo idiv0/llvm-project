@@ -206,3 +206,25 @@ void stbind0(int x) {
     [Green, case Color::Red] =>;
   };
 }
+
+
+void alternativePatternPolymorphic() {
+  inspect(42) {
+    <const char> => 'c';
+    <const int> => 'i';
+  };
+}
+
+
+void alternativePatternPolymorphicUnknownType() {
+  inspect(42) {
+    <T> => 'class';   // expected-error {{unknown type name 'T'}}
+  };
+}
+  
+void alternativePatternPolymorphicMissingType() {
+  inspect(42) {
+    <> => 'c';  // expected-error {{type name requires a specifier or qualifier}}
+  };
+}
+

@@ -2024,6 +2024,7 @@ private:
   StmtResult ParseExpressionPattern(ParsedStmtContext StmtCtx,
                                     bool HasCase = false);
   StmtResult ParseStructuralBindingPattern(ParsedStmtContext StmtCtx);
+  StmtResult ParseAlternativePattern(ParsedStmtContext StmtCtx);
 
   ///
   /// Structured bindings pattern

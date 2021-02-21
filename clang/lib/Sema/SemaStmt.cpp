@@ -840,6 +840,14 @@ StmtResult Sema::ActOnStructuredBindingPattern(
   return SBP;
 }
 
+// FIXME
+StmtResult 
+Sema::ActOnAlternativePattern(
+                              bool ExcludedFromTypeDeduction) {
+  auto *ABP = AlternativePatternStmt::CreateEmpty(Context, false);
+  return ABP;
+}
+
 StmtResult
 Sema::ActOnLabelStmt(SourceLocation IdentLoc, LabelDecl *TheDecl,
                      SourceLocation ColonLoc, Stmt *SubStmt) {

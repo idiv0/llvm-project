@@ -4259,6 +4259,12 @@ public:
   StmtResult CreatePatternIdBindingVar(Expr *From, IdentifierInfo *II,
                                        SourceLocation IdentifierLoc);
 
+  // StmtResult ActOnAlternativePattern(SourceLocation CstExprLoc,
+  //                                    SourceLocation ColonLoc, Expr *CstExpr,
+  //                                    Stmt *SubStmt, Expr *PatternGuard,
+  //                                    bool ExcludedFromTypeDeduction);
+  StmtResult ActOnAlternativePattern(bool ExcludedFromTypeDeduction);
+
   class ConditionResult;
   StmtResult ActOnIfStmt(SourceLocation IfLoc, bool IsConstexpr,
                          Stmt *InitStmt,

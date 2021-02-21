@@ -200,6 +200,8 @@ Retry:
       // for identifier patterns.
       if (NextToken().is(tok::equalarrow) || NextToken().is(tok::kw_if))
         return ParseIdentifierPattern(StmtCtx);
+      if (NextToken().is(tok::less) || NextToken().is(tok::kw_if))
+        return ParseAlternativePattern(StmtCtx);
       // Otherwise try parsing as an expression pattern. This
       // should handle constant-expressions with qualified names
       // (e.g enumerations) without the need for a tok::case to
@@ -240,6 +242,8 @@ Retry:
   default: {
     if (Tok.is(tok::l_square) && IsMaybeInspectPattern(getCurScope()))
       return ParseStructuralBindingPattern(StmtCtx);
+    if (Tok.is(tok::less) && IsMaybeInspectPattern(getCurScope()))
+      return ParseAlternativePattern(StmtCtx);
 
     if ((getLangOpts().CPlusPlus || getLangOpts().MicrosoftExt ||
          (StmtCtx & ParsedStmtContext::AllowDeclarationsInC) !=
@@ -1165,6 +1169,85 @@ StmtResult Parser::ParseExpressionPattern(ParsedStmtContext StmtCtx,
 
   PatternScope.Exit();
   return EPS;
+}
+
+
+/// ParseAlternativePattern - Type pattern matching
+///
+///       alternative-pattern:
+///         <auto> pattern-guard[opt] '=>' statement
+///         <concept> pattern-guard[opt] '=>' statement
+///         <type> r pattern-guard[opt] '=>' statement
+///         <type> [w, h] pattern-guard[opt] '=>' statement
+///         <constant-expression> pattern-guard[opt] '=>' statement
+///
+StmtResult Parser::ParseAlternativePattern(ParsedStmtContext StmtCtx) {
+  assert((Tok.is(tok::less)) && "Not an alternative pattern!");
+  assert(getCurScope()->isInspectScope() &&
+         "Alternative pattern should be in inspect scope");
+  // Get the type
+  //   <type> pattern-guard[opt] '=>' statement
+  //   ^
+  
+  SourceLocation LAngleBracketLoc = Tok.getLocation();
+  llvm::errs() << "Consuming <\n";
+  (void)ConsumeToken();
+  llvm::errs() << "Consumed <\n";
+  //   <type> pattern-guard[opt] '=>' statement
+  //    ^
+  
+  // We start a new scope here I think? That or after the type declaration
+  // and just before we have new variables.
+  ParseScope PatternScope(this, Scope::PatternScope | Scope::DeclScope, true);
+  
+  
+  // Parse the common declaration-specifiers piece.
+  DeclSpec DS(AttrFactory);
+  ParseSpecifierQualifierList(DS);
+  
+  // Parse the abstract-declarator, if present.
+  Declarator DeclaratorInfo(DS, DeclaratorContext::TypeNameContext);
+  ParseDeclarator(DeclaratorInfo);
+  
+  // (void)ConsumeToken();      // Debugging to try and get over type
+  llvm::errs() << "Consumed type\n";
+  //   <type> pattern-guard[opt] '=>' statement
+  //        ^
+
+  SourceLocation RAngleBracketLoc = Tok.getLocation();
+
+  if (ExpectAndConsume(tok::greater))
+    return StmtError(Diag(LAngleBracketLoc, diag::note_matching) << tok::less);
+  llvm::errs() << "Consumed >\n";
+  
+  if (!(Tok.is(tok::equal) && NextToken().is(tok::greater)))
+    llvm::errs() << "Didn't have a => when expected\n";
+    // ERROR
+  
+  SourceLocation ArrowLoc = ConsumeToken();
+  
+  
+  //   <type> pattern-guard[opt] '=>' {}
+  //                                  ^
+  StmtResult SubStmt = ParseStatement(nullptr, StmtCtx);
+  
+  // // Handle pattern-guard[opt]
+  // Sema::ConditionResult Cond;
+  // SourceLocation IfLoc;
+
+  // ParseScope PatternScope(this, Scope::PatternScope | Scope::DeclScope, true);
+  
+  // FIXME: Possible call to ParsePatternList here to deal with [] ?
+  
+  
+  // FIXME: retrieve constexpr information from InspectExpr
+  // if (Tok.is(tok::kw_if))
+  //   if (!ParsePatternGuard(Cond, IfLoc, false /*IsConstexprIf*/))
+  //     return StmtError();
+      
+  StmtResult ABP = Actions.ActOnAlternativePattern(false);
+  PatternScope.Exit();
+  return ABP;
 }
 
 /// ParseCaseStatement
