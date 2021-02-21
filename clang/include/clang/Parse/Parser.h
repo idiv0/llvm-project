@@ -2025,6 +2025,9 @@ private:
                                     bool HasCase = false);
   StmtResult ParseStructuralBindingPattern(ParsedStmtContext StmtCtx);
   StmtResult ParseAlternativePattern(ParsedStmtContext StmtCtx);
+  
+  StmtResult ParseIdentifierInInspect(IdentifierInfo* II,
+                                      SourceLocation IdentifierLoc);
 
   ///
   /// Structured bindings pattern

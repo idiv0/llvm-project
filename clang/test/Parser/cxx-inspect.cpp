@@ -215,10 +215,16 @@ void alternativePatternPolymorphic() {
   };
 }
 
+template<typename T>
+void alternativePatternPolymorphicTemplatedType() {
+  inspect(42) {
+    <T> => "class";
+  };
+}
 
 void alternativePatternPolymorphicUnknownType() {
   inspect(42) {
-    <T> => 'class';   // expected-error {{unknown type name 'T'}}
+    <T> => "class";   // expected-error {{unknown type name 'T'}}
   };
 }
   
@@ -228,3 +234,14 @@ void alternativePatternPolymorphicMissingType() {
   };
 }
 
+void alternativePatternPolymorphicWithVariable() {
+  inspect(42) {
+    <int> n => 'A';
+  };
+}
+
+void alternativePatternMissingEqualArrow() {
+  inspect(42) {
+    <int> n;  // expected-error {{expected '=>' after type pattern}}
+  };
+}

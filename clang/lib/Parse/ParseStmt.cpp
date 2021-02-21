@@ -1004,6 +1004,21 @@ StmtResult Parser::ParseWildcardPattern(ParsedStmtContext StmtCtx) {
                                       Cond.get().second, ExclaimLoc.isValid());
 }
 
+StmtResult Parser::ParseIdentifierInInspect(IdentifierInfo *II, SourceLocation IdentifierLoc)
+{
+  // Create binding variable now and allow for it to be visible during pattern
+  // guard parsing.
+  auto *FSI = Actions.getCurFunction();
+  if (FSI->InspectStack.empty())
+    return StmtError();
+  InspectExpr *Inspect = FSI->InspectStack.back().getPointer();
+  StmtResult NewIdVar =
+      Actions.CreatePatternIdBindingVar(Inspect->getCond(), II, IdentifierLoc);
+  if (NewIdVar.isInvalid())
+    return StmtError();
+  return NewIdVar;
+}
+
 /// ParseIdentifierPattern - We have an identifier that matches any value
 /// and binds back to the inspect condition. It can optionally contain a
 /// pattern guard. The statement comes after the '=>'.
@@ -1027,16 +1042,7 @@ StmtResult Parser::ParseIdentifierPattern(ParsedStmtContext StmtCtx) {
 
   ParseScope PatternScope(this, Scope::PatternScope | Scope::DeclScope, true);
 
-  // Create binding variable now and allow for it to be visible during pattern
-  // guard parsing.
-  auto *FSI = Actions.getCurFunction();
-  if (FSI->InspectStack.empty())
-    return StmtError();
-  InspectExpr *Inspect = FSI->InspectStack.back().getPointer();
-  StmtResult NewIdVar =
-      Actions.CreatePatternIdBindingVar(Inspect->getCond(), II, IdentifierLoc);
-  if (NewIdVar.isInvalid())
-    return StmtError();
+  auto NewIdVar = ParseIdentifierInInspect(II, IdentifierLoc);
 
   // FIXME: retrieve constexpr information from InspectExpr
   if (Tok.is(tok::kw_if))
@@ -1188,18 +1194,13 @@ StmtResult Parser::ParseAlternativePattern(ParsedStmtContext StmtCtx) {
   // Get the type
   //   <type> pattern-guard[opt] '=>' statement
   //   ^
-  
-  SourceLocation LAngleBracketLoc = Tok.getLocation();
-  llvm::errs() << "Consuming <\n";
-  (void)ConsumeToken();
-  llvm::errs() << "Consumed <\n";
+  SourceLocation LAngleBracketLoc = ConsumeToken();
   //   <type> pattern-guard[opt] '=>' statement
   //    ^
   
   // We start a new scope here I think? That or after the type declaration
   // and just before we have new variables.
   ParseScope PatternScope(this, Scope::PatternScope | Scope::DeclScope, true);
-  
   
   // Parse the common declaration-specifiers piece.
   DeclSpec DS(AttrFactory);
@@ -1209,41 +1210,52 @@ StmtResult Parser::ParseAlternativePattern(ParsedStmtContext StmtCtx) {
   Declarator DeclaratorInfo(DS, DeclaratorContext::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
   
-  // (void)ConsumeToken();      // Debugging to try and get over type
-  llvm::errs() << "Consumed type\n";
-  //   <type> pattern-guard[opt] '=>' statement
+  // llvm::errs() << "Consumed type\n";
+  //   <type> identifier pattern-guard[opt] '=>' statement
   //        ^
 
   SourceLocation RAngleBracketLoc = Tok.getLocation();
 
   if (ExpectAndConsume(tok::greater))
     return StmtError(Diag(LAngleBracketLoc, diag::note_matching) << tok::less);
-  llvm::errs() << "Consumed >\n";
-  
-  if (!(Tok.is(tok::equal) && NextToken().is(tok::greater)))
-    llvm::errs() << "Didn't have a => when expected\n";
-    // ERROR
-  
-  SourceLocation ArrowLoc = ConsumeToken();
   
   
-  //   <type> pattern-guard[opt] '=>' {}
+  if (!Tok.is(tok::equalarrow) && !Tok.is(tok::kw_if))
+  {
+    //   <type> identifier pattern-guard[opt] '=>' statement
+    //          ^
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    SourceLocation IdentifierLoc = ConsumeToken();
+    auto NewIdVar = ParseIdentifierInInspect(II, IdentifierLoc);
+  }
+  
+  // Handle pattern-guard[opt]
+  Sema::ConditionResult Cond;
+  SourceLocation IfLoc;
+  
+  // FIXME: retrieve constexpr information from InspectExpr
+  if (Tok.is(tok::kw_if))
+    //   <type> identifier pattern-guard[opt] '=>' {}
+    //                     ^
+    if (!ParsePatternGuard(Cond, IfLoc, false /*IsConstexprIf*/))
+      return StmtError();
+  
+  SourceLocation colon = Tok.getLocation();
+  // colon.print(llvm::errs(), PP.getSourceManager());
+  
+  //   <type> identifier pattern-guard[opt] '=>' {}
+  //                                         ^
+  if (!Tok.is(tok::equalarrow))
+    return StmtError(Diag(colon, diag::err_expected_equalarrow_after)
+      << (IfLoc.isValid() ? "if" : "type pattern"));
+  
+  ConsumeToken();  
+  
+  //   <type> identifier pattern-guard[opt] '=>' {}
   //                                  ^
   StmtResult SubStmt = ParseStatement(nullptr, StmtCtx);
   
-  // // Handle pattern-guard[opt]
-  // Sema::ConditionResult Cond;
-  // SourceLocation IfLoc;
-
-  // ParseScope PatternScope(this, Scope::PatternScope | Scope::DeclScope, true);
-  
   // FIXME: Possible call to ParsePatternList here to deal with [] ?
-  
-  
-  // FIXME: retrieve constexpr information from InspectExpr
-  // if (Tok.is(tok::kw_if))
-  //   if (!ParsePatternGuard(Cond, IfLoc, false /*IsConstexprIf*/))
-  //     return StmtError();
       
   StmtResult ABP = Actions.ActOnAlternativePattern(false);
   PatternScope.Exit();
