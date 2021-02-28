@@ -210,38 +210,53 @@ void stbind0(int x) {
 
 void alternativePatternPolymorphic() {
   inspect(42) {
-    <const char> => 'c';
-    <const int> => 'i';
+    <const char> character => 'c';
+    <const int> integer => 'i';
   };
 }
 
 template<typename T>
 void alternativePatternPolymorphicTemplatedType() {
   inspect(42) {
-    <T> => "class";
+    <T> type => "class";
+  };
+}
+
+void alternativePatternPolymorphicMissingIdentifier() {
+  inspect(42) {
+    <const char> => 'c';    // expected-error {{expected identifier or literal}}
+    <const int> integer => 'i';
   };
 }
 
 void alternativePatternPolymorphicUnknownType() {
   inspect(42) {
-    <T> => "class";   // expected-error {{unknown type name 'T'}}
+    <T> type => "class";   // expected-error {{unknown type name 'T'}}
   };
 }
   
 void alternativePatternPolymorphicMissingType() {
   inspect(42) {
-    <> => 'c';  // expected-error {{type name requires a specifier or qualifier}}
+    <> character => 'c';  // expected-error {{type name requires a specifier or qualifier}}
   };
 }
 
 void alternativePatternPolymorphicWithVariable() {
   inspect(42) {
-    <int> n => 'A';
+    <int> integer => 'A';
   };
 }
 
 void alternativePatternMissingEqualArrow() {
   inspect(42) {
     <int> n;  // expected-error {{expected '=>' after type pattern}}
+  };
+}
+
+void alternativePatternMissingGreaterArrow() {
+  inspect(42) {
+    <int i => 'I';  // expected-error {{expected '>'}}
+                    // expected-note@-1 {{to match this '<'}}
+    <float> f => 'F';
   };
 }

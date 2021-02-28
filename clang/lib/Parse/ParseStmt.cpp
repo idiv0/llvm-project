@@ -1192,10 +1192,10 @@ StmtResult Parser::ParseAlternativePattern(ParsedStmtContext StmtCtx) {
   assert(getCurScope()->isInspectScope() &&
          "Alternative pattern should be in inspect scope");
   // Get the type
-  //   <type> pattern-guard[opt] '=>' statement
+  //   <type> identifier pattern-guard[opt] '=>' statement
   //   ^
   SourceLocation LAngleBracketLoc = ConsumeToken();
-  //   <type> pattern-guard[opt] '=>' statement
+  //   <type> identifier pattern-guard[opt] '=>' statement
   //    ^
   
   // We start a new scope here I think? That or after the type declaration
@@ -1216,17 +1216,27 @@ StmtResult Parser::ParseAlternativePattern(ParsedStmtContext StmtCtx) {
 
   SourceLocation RAngleBracketLoc = Tok.getLocation();
 
-  if (ExpectAndConsume(tok::greater))
-    return StmtError(Diag(LAngleBracketLoc, diag::note_matching) << tok::less);
+  if (ExpectAndConsume(tok::greater)) {
+    Diag(LAngleBracketLoc, diag::note_matching) << tok::less;
+    SkipUntil(tok::semi);
+    return StmtError();
+  }
   
-  
-  if (!Tok.is(tok::equalarrow) && !Tok.is(tok::kw_if))
-  {
+  if (Tok.is(tok::l_square)) {
+    //   <type> [id1, id2, ...] pattern-guard[opt] '=>' statement
+    //          ^
+  }
+  else if(Tok.isAnyIdentifier()) {
     //   <type> identifier pattern-guard[opt] '=>' statement
     //          ^
     IdentifierInfo *II = Tok.getIdentifierInfo();
     SourceLocation IdentifierLoc = ConsumeToken();
     auto NewIdVar = ParseIdentifierInInspect(II, IdentifierLoc);
+  }
+  else {
+    Diag(Tok, diag::err_expected_id_or_literal);
+    SkipUntil(tok::semi);
+    return StmtError();
   }
   
   // Handle pattern-guard[opt]
